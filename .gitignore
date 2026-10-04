@@ -1,0 +1,21 @@
+# Data and build outputs
+data/
+*.parquet
+*.pmtiles
+*.fgb
+
+# Python
+.venv/
+__pycache__/
+*.egg-info/
+.pytest_cache/
+
+# LLM / assistant files
+CLAUDE.md
+CLAUDE.local.md
+.claude/
+AGENTS.md
+.cursor/
+.cursorrules
+.aider*
+.github/copilot-instructions.md

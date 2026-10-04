@@ -1,0 +1,2 @@
+# Keep the NAD sample byte-for-byte as published (CRLF, BOM).
+tests/fixtures/*.csv -text

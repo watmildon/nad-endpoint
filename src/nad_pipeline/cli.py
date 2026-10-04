@@ -1,0 +1,71 @@
+"""Command line entry point: nad fetch | ingest | profile."""
+
+import argparse
+import sys
+import time
+from pathlib import Path
+
+from . import config
+
+
+def _progress():
+    last = [0.0]
+
+    def report(done: int, total: int):
+        now = time.monotonic()
+        if now - last[0] >= 30 or done == total:
+            last[0] = now
+            print(f"  {done / 1e9:.2f} / {total / 1e9:.2f} GB", flush=True)
+
+    return report
+
+
+def _latest_zip() -> Path:
+    zips = sorted(config.DOWNLOAD_DIR.glob("*.zip"), key=lambda p: p.stat().st_mtime)
+    if not zips:
+        sys.exit("No downloaded release found; run `nad fetch` first.")
+    return zips[-1]
+
+
+def _latest_release() -> str:
+    releases = sorted(
+        (p.parent for p in config.DATA_DIR.glob("r*/manifest.json")),
+        key=lambda p: int(p.name[1:]),
+    )
+    if not releases:
+        sys.exit("No ingested release found; run `nad ingest` first.")
+    return releases[-1].name
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(prog="nad")
+    sub = parser.add_subparsers(dest="command", required=True)
+    sub.add_parser("fetch", help="download the current NAD text file")
+    p = sub.add_parser("ingest", help="convert a downloaded zip to raw Parquet")
+    p.add_argument("--zip", type=Path, help="zip to ingest (default: newest download)")
+    p = sub.add_parser("profile", help="profile raw Parquet per state and source")
+    p.add_argument("--release", help="release to profile, e.g. r24 (default: newest)")
+    args = parser.parse_args(argv)
+
+    if args.command == "fetch":
+        from .fetch import fetch
+
+        print(fetch(_progress()))
+    elif args.command == "ingest":
+        from .ingest import ingest
+
+        manifest = ingest(args.zip or _latest_zip(), _progress())
+        print(f"{manifest['release']}: {manifest['rows']:,} rows")
+        if manifest["rows"] != manifest["expected_rows"]:
+            sys.exit(
+                f"Row count mismatch: metadata says {manifest['expected_rows']:,}"
+            )
+    elif args.command == "profile":
+        from .profile import profile
+
+        for path in profile(args.release or _latest_release()):
+            print(path)
+
+
+if __name__ == "__main__":
+    main()
