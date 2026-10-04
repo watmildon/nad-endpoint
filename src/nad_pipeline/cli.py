@@ -1,4 +1,5 @@
-"""Command line entry point: nad fetch | ingest | profile."""
+"""Command line entry point: nad fetch | ingest | profile | refdata | transform | backfill
+| dedup."""
 
 import argparse
 import sys
@@ -45,6 +46,13 @@ def main(argv=None):
     p.add_argument("--zip", type=Path, help="zip to ingest (default: newest download)")
     p = sub.add_parser("profile", help="profile raw Parquet per state and source")
     p.add_argument("--release", help="release to profile, e.g. r24 (default: newest)")
+    sub.add_parser("refdata", help="download and build the place name reference")
+    p = sub.add_parser("transform", help="apply the field rules and write OSM-tagged points")
+    p.add_argument("--release", help="release to transform, e.g. r24 (default: newest)")
+    for name, text in (("backfill", "fill missing city and postcode from Census polygons"),
+                       ("dedup", "mark duplicate address points")):
+        p = sub.add_parser(name, help=text)
+        p.add_argument("--release", help="release, e.g. r24 (default: newest)")
     args = parser.parse_args(argv)
 
     if args.command == "fetch":
@@ -65,6 +73,25 @@ def main(argv=None):
 
         for path in profile(args.release or _latest_release()):
             print(path)
+    elif args.command == "refdata":
+        from .refdata import build
+
+        print(build())
+    elif args.command == "transform":
+        from .transform import report, transform
+
+        release = args.release or _latest_release()
+        print(transform(release))
+        for path in report(release):
+            print(path)
+    elif args.command == "backfill":
+        from .backfill import backfill
+
+        print(backfill(args.release or _latest_release()))
+    elif args.command == "dedup":
+        from .dedup import dedup
+
+        print(dedup(args.release or _latest_release()))
 
 
 if __name__ == "__main__":

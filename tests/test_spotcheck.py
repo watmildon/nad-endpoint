@@ -94,3 +94,11 @@ def test_directional_difference_still_matches_address():
     assert result["matched_directional_differs"] == 1
     assert result["street_conflict"] == 1
     assert result["osm_only"] == 1
+
+
+def test_punctuation_difference_is_its_own_category():
+    points = [point("1", "Bennetts Way"), point("2", "C and H Circle"),
+              point("3", "Brannon Harris Way")]
+    result = compare_streets(
+        points, names={"Bennett's Way", "C & H Circle", "Brannon-Harris Way"}, alt_names=set())
+    assert (result["punctuation_only"], result["unmatched"]) == (3, 0)

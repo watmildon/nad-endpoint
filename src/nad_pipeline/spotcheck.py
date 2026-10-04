@@ -7,6 +7,7 @@ OSM street names and, where OSM has them, OSM addresses.
 import difflib
 import json
 import math
+import re
 import urllib.parse
 import urllib.request
 from collections import Counter, defaultdict
@@ -104,6 +105,33 @@ def fetch_esri(bbox, layer: str = ESRI_NAD_LAYER) -> list[dict]:
         offset += len(features)
 
 
+def fetch_local(bbox, release: str) -> list[dict]:
+    """Published (not dropped) points of our own transform output inside bbox."""
+    import duckdb
+
+    from . import config
+    from .transform import osm_glob
+
+    s, w, n, e = bbox
+    rows = duckdb.sql(
+        f"""
+        SELECT lat, lon, addr_housenumber, addr_street, addr_unit, addr_city, addr_postcode,
+               nad_source
+        FROM read_parquet('{osm_glob(config.release_dir(release) / "osm")}',
+                          hive_partitioning = false)
+        WHERE drop_reason IS NULL AND lat BETWEEN {s} AND {n} AND lon BETWEEN {w} AND {e}
+        """
+    ).fetchall()
+    keys = ("lat", "lon", "housenumber", "street", "unit", "city", "postcode", "source")
+    return [dict(zip(keys, row)) for row in rows]
+
+
+def _punctuation_key(value: str | None) -> str:
+    """Key ignoring apostrophes, periods, hyphens and '&' versus 'and'."""
+    text = _key(value).replace("&", " and ")
+    return " ".join(re.sub(r"['’.]", "", text).replace("-", " ").split())
+
+
 def _key(value: str | None) -> str:
     return " ".join((value or "").casefold().split())
 
@@ -152,8 +180,10 @@ def compare_streets(points: list[dict], names: set[str], alt_names: set[str]) ->
     by_key = defaultdict(set)
     for name in names | alt_names:
         by_key[_key(name)].add(name)
-    result = {"exact": 0, "alternate": 0, "case_only": 0, "directional_only": 0, "unmatched": 0}
+    result = {"exact": 0, "alternate": 0, "case_only": 0, "punctuation_only": 0,
+              "directional_only": 0, "unmatched": 0}
     unmatched, directional = [], []
+    by_punctuation = {_punctuation_key(name): name for name in sorted(names | alt_names)}
     for street, n in counts.items():
         if street in names:
             result["exact"] += n
@@ -162,6 +192,9 @@ def compare_streets(points: list[dict], names: set[str], alt_names: set[str]) ->
         elif _key(street) in by_key:
             result["case_only"] += n
             unmatched.append((n, street, sorted(by_key[_key(street)])[0]))
+        elif _punctuation_key(street) in by_punctuation:
+            result["punctuation_only"] += n
+            unmatched.append((n, street, by_punctuation[_punctuation_key(street)]))
         elif osm_name := next(
             (o for o in sorted(names | alt_names) if differs_only_by_directional(street, o)), None
         ):
