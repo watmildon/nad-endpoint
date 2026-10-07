@@ -1,7 +1,7 @@
 """Words that follow "ST" in a street name when ST means Saint.
 
 Derived from NAD r24 (data/research/saint-vs-street.md, "Saint allow list"; counts per word in
-data/research/st_work/saint_whitelist.csv). A word qualifies if it follows a leading ST in at
+data/research/st_work/saint_allow_list.csv). A word qualifies if it follows a leading ST in at
 least two distinct state+name pairs, or appears spelled out as SAINT/SAINTE <word> anywhere in
 NAD r24, or is in a US place name "St./Saint <word>", or is on TIGER-ROAR's saint list. Route
 and type words, directionals, numbers and STATE, NO, CR, SUNSET, WEB, SING, FOUNTAIN, LAKES,
