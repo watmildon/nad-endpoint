@@ -39,8 +39,12 @@ def smart_title_token(token: str, first: bool = True, keep_upper: frozenset = fr
         return token.lower()
     if _ORDINAL.match(token.upper()):
         return _case_word(token)  # also repairs naive title-casing such as 13Th
+    if token.upper() == "MLK":
+        return "MLK"
     if not token.isupper() and not token.islower():
-        # Mixed case: only repair naive title-casing of Mc names (Mcdowell -> McDowell).
+        # Mixed case: only repair naive title-casing (Mcdowell -> McDowell, Alban'S -> Alban's).
+        if token.endswith("'S"):
+            return token[:-1] + "s"
         return "Mc" + token[2:].capitalize() if _NAIVE_MC.match(token) else token
     if token.upper() in keep_upper:
         return token.upper()

@@ -1,0 +1,288 @@
+State,County,St_PreMod,St_PreDir,St_PreTyp,St_PreSep,St_Name,St_PosTyp,St_PosDir,St_PosMod,expected,source
+MO,St. Louis,,,,,ST GENEVIEVE,Lane,,,Saint Genevieve Lane,osm_st
+MO,St. Louis,,,,,ST CLOVIS,Lane,,,Saint Clovis Lane,osm_st
+MO,St. Louis,,,,,ST DENNIS,Lane,,,Saint Dennis Lane,osm_st
+MO,St. Louis,,,,,ST KATHERINE,Lane,,,Saint Katherine Lane,osm_st
+MO,St. Louis,,,,,ST MICHAEL,Lane,,,Saint Michael Lane,osm_st
+MO,St. Louis,,,,,ST CHARLES ROCK,Road,,,Saint Charles Rock Road,osm_st
+MO,St. Louis,,,,,ST MATTHEW,Lane,,,Saint Matthew Lane,osm_st
+MO,St. Louis,,,,,ST MONICA,Lane,,,Saint Monica Lane,osm_st
+MO,St. Louis,,,,,ST GABRIEL,Court,,,Saint Gabriel Court,osm_st
+MO,St. Louis,,,,,ST JUDE,Lane,,,Saint Jude Lane,osm_st
+MO,St. Louis,,,,,ST NATHAN,Lane,,,Saint Nathan Lane,osm_st
+MO,St. Louis,,,,,ST DONALD,Lane,,,Saint Donald Lane,osm_st
+MO,St. Louis,,,,,ST JOACHIM,Lane,,,Saint Joachim Lane,osm_st
+MO,St. Louis,,,,,ST ARTHUR,Lane,,,Saint Arthur Lane,osm_st
+MO,St. Louis,,,,,ST MARGUERITE,Lane,,,Saint Marguerite Lane,osm_st
+MO,St. Louis,,,,,ST CHARLES,Lane,,,Saint Charles Lane,osm_st
+MO,St. Louis,,,,,ST BENEDICT,Court,,,Saint Benedict Court,osm_st
+MO,St. Louis,,,,,ST JOAN,Lane,,,Saint Joan Lane,osm_st
+MO,St. Louis,,,,,ST MARTHA,Lane,,,Saint Martha Lane,osm_st
+MO,St. Louis,,,,,ST BLASE,Lane,,,Saint Blase Lane,osm_st
+MO,St. Louis,,,,,ST LUKE,Lane,,,Saint Luke Lane,osm_st
+MO,St. Louis,,,,,ST DAVID,Lane,,,Saint David Lane,osm_st
+MO,St. Louis,,,,,ST WILLIAMS,Lane,,,Saint Williams Lane,osm_st
+MO,St. Louis,,,,,ST HELEN,Lane,,,Saint Helen Lane,osm_st
+MO,St. Louis,,,,,ST MARK,Lane,,,Saint Mark Lane,osm_st
+MO,St. Louis,,,,,ST ROBERT,Lane,,,Saint Robert Lane,osm_st
+MO,St. Louis,,,,,ST RICHARD,Lane,,,Saint Richard Lane,osm_st
+MO,St. Louis,,,,,ST GREGORY,Lane,,,Saint Gregory Lane,osm_st
+MO,St. Louis,,,,,ST MARTIN,Lane,,,Saint Martin Lane,osm_st
+MO,St. Louis,,,,,ST BRIDGET,Lane,,,Saint Bridget Lane,osm_st
+MO,St. Louis,,,,,ST MYRON,Lane,,,Saint Myron Lane,osm_st
+MO,St. Louis,,,,,ST CHRISTOPHER,Lane,,,Saint Christopher Lane,osm_st
+MO,St. Louis,,,,,ST DANIEL,Lane,,,Saint Daniel Lane,osm_st
+MO,St. Louis,,,,,ST HENRY,Lane,,,Saint Henry Lane,osm_st
+MO,St. Louis,,,,,ST ARSENE,Lane,,,Saint Arsene Lane,osm_st
+MO,St. Louis,,,,,ST ANTHONY,Lane,,,Saint Anthony Lane,osm_st
+MO,St. Louis,,,,,ST GREGORY,Court,,,Saint Gregory Court,osm_st
+MO,St. Louis,,,,,ST IGNATIUS,Lane,,,Saint Ignatius Lane,osm_st
+MO,St. Louis,,,,,ST ANN,Lane,,,Saint Ann Lane,osm_st
+MO,St. Louis,,,,,ST XAVIER,Lane,,,Saint Xavier Lane,osm_st
+MO,St. Louis,,,,,ST FRANCIS,Lane,,,Saint Francis Lane,osm_st
+MO,St. Louis,,,,,ST DOLORES,Drive,,,Saint Dolores Drive,osm_st
+MO,St. Louis,,,,,RUE ST FRANCOIS,Street,,,Rue Saint Francois Street,osm_st
+MO,St. Louis,,West,,,ST ANTHONY,Lane,,,West Saint Anthony Lane,osm_st
+MO,St. Louis,,,,,ST REGIS,Lane,,,Saint Regis Lane,osm_st
+MO,St. Louis,,North,,,ST JACQUES,Street,,,North Saint Jacques Street,osm_st
+MO,St. Louis,,,,,ST FERDINAND,Street,,,Saint Ferdinand Street,osm_st
+MO,St. Louis,,,,,RUE ST CHARLES,Street,,,Rue Saint Charles Street,osm_st
+MO,St. Louis,,,,,ST EUGENE,Lane,,,Saint Eugene Lane,osm_st
+MO,St. Louis,,,,,ST MICHAEL,Street,,,Saint Michael Street,osm_st
+MO,St. Louis,,,,,ST MARTHA,Court,,,Saint Martha Court,osm_st
+MO,St. Louis,,,,,RUE ST FERDINAND,Street,,,Rue Saint Ferdinand Street,osm_st
+MO,St. Louis,,,,,ST BERNADETTE,Lane,,,Saint Bernadette Lane,osm_st
+MO,St. Louis,,,,,ST JAMES,Court,,,Saint James Court,osm_st
+MO,St. Louis,,,,,ST BERNARD,Drive,,,Saint Bernard Drive,osm_st
+MO,St. Louis,,South,,,ST CHARLES,Street,,,South Saint Charles Street,osm_st
+MO,St. Louis,,,,,ST MAURICE,Lane,,,Saint Maurice Lane,osm_st
+MO,St. Louis,,South,,,ST JACQUES,Street,,,South Saint Jacques Street,osm_st
+MO,St. Louis,,,,,ST MARIE,Street,,,Saint Marie Street,osm_st
+MO,St. Louis,,,,,ST FLORENCE,Drive,,,Saint Florence Drive,osm_st
+MO,St. Louis,,,,,ST MALACHY,Lane,,,Saint Malachy Lane,osm_st
+MO,St. Louis,,,,,ST FERDINAND PARK,Drive,,,Saint Ferdinand Park Drive,osm_st
+MO,St. Louis,,,,,RUE ST DENIS,Street,,,Rue Saint Denis Street,osm_st
+MO,St. Louis,,,,,ST LOUIS,Street,,,Saint Louis Street,osm_st
+MO,St. Louis,,,,,ST JOAN,Drive,,,Saint Joan Drive,osm_st
+MO,St. Louis,,,,,RUE ST CATHERINE,Street,,,Rue Saint Catherine Street,osm_st
+MO,St. Louis,,,,,ST PATRICK,Lane,,,Saint Patrick Lane,osm_st
+MO,St. Louis,,,,,ST CORNELIUS,Court,,,Saint Cornelius Court,osm_st
+MO,St. Louis,,,,,ST BENEDICT,Lane,,,Saint Benedict Lane,osm_st
+MO,St. Louis,,,,,ST ALICE,Lane,,,Saint Alice Lane,osm_st
+MO,St. Louis,,,,,ST MATTHEW,Drive,,,Saint Matthew Drive,osm_st
+MO,St. Louis,,,,,ST MARK,Drive,,,Saint Mark Drive,osm_st
+MO,St. Louis,,,,,ST BAPTISTA,Lane,,,Saint Baptista Lane,osm_st
+MO,St. Louis,,,,,ST DENIS,Street,,,Saint Denis Street,osm_st
+MO,St. Louis,,,,,RUE ST LOUIS,Street,,,Rue Saint Louis Street,osm_st
+MO,St. Louis,,,,,ST ALBERT,Lane,,,Saint Albert Lane,osm_st
+MO,St. Louis,,,,,ST JOSEPH,Street,,,Saint Joseph Street,osm_st
+MO,St. Louis,,,,,ST RONALD,Lane,,,Saint Ronald Lane,osm_st
+MO,St. Louis,,,,,ST GABRIELLE,Drive,,,Saint Gabrielle Drive,osm_st
+MO,St. Louis,,,,,ST PIUS,Court,,,Saint Pius Court,osm_st
+MO,St. Louis,,,,,ST LORETTO,Drive,,,Saint Loretto Drive,osm_st
+MO,St. Louis,,,,,ST CHRISTINA,Lane,,,Saint Christina Lane,osm_st
+MO,St. Louis,,,,,ST CORNELIUS,Lane,,,Saint Cornelius Lane,osm_st
+MO,St. Louis,,,,,ST VIRGIL,Lane,,,Saint Virgil Lane,osm_st
+MO,St. Louis,,,,,ST GEORGE,Court,,,Saint George Court,osm_st
+MO,St. Louis,,,,,ST FRANCOIS,Street,,,Saint Francois Street,osm_st
+MO,St. Louis,,,,,RUE ST PIERRE,Street,,,Rue Saint Pierre Street,osm_st
+MO,St. Louis,,,,,ST JOHN,Court,,,Saint John Court,osm_st
+MO,St. Louis,,,,,ST MARGARET,Court,,,Saint Margaret Court,osm_st
+MO,St. Louis,,,,,ST DIANA,Lane,,,Saint Diana Lane,osm_st
+MO,St. Louis,,,,,RUE ST JEAN,Street,,,Rue Saint Jean Street,osm_st
+MO,St. Louis,,,,,ST FLORENT,Lane,,,Saint Florent Lane,osm_st
+MO,St. Louis,,,,,ST MADELEINE,Lane,,,Saint Madeleine Lane,osm_st
+MO,St. Louis,,,,,ST WALTER,Lane,,,Saint Walter Lane,osm_st
+MO,St. Louis,,,,,ST PIERRE,Court,,,Saint Pierre Court,osm_st
+MO,St. Louis,,,,,ST CELESTE,Drive,,,Saint Celeste Drive,osm_st
+MO,St. Louis,,,,,RUE ST ANTOINE,Street,,,Rue Saint Antoine Street,osm_st
+MO,St. Louis,,,,,ST GREGORY,Drive,,,Saint Gregory Drive,osm_st
+MO,St. Louis,,,,,ST ANTOINE,Street,,,Saint Antoine Street,osm_st
+MO,St. Louis,,,,,ST LAURENCE,Drive,,,Saint Laurence Drive,osm_st
+MO,St. Louis,,,,,ST CHERYL,Lane,,,Saint Cheryl Lane,osm_st
+MO,St. Louis,,,,,ST CATHERINE,Street,,,Saint Catherine Street,osm_st
+MO,St. Louis,,,,,ST ROSE,Court,,,Saint Rose Court,osm_st
+MO,St. Louis,,,,,ST NICHOLAS,Lane,,,Saint Nicholas Lane,osm_st
+MO,St. Louis,,,,,ST GENEVIEVE,Court,,,Saint Genevieve Court,osm_st
+MO,St. Louis,,,,,ST AUGUSTA,Lane,,,Saint Augusta Lane,osm_st
+MO,St. Louis,,,,,ST EDWARD,Lane,,,Saint Edward Lane,osm_st
+MO,St. Louis,,,,,ST CHARLES,Street,,,Saint Charles Street,osm_st
+MO,St. Louis,,,,,ST PIERRE,Street,,,Saint Pierre Street,osm_st
+MO,St. Louis,,,,,ST STEPHEN,Drive,,,Saint Stephen Drive,osm_st
+MO,St. Louis,,,,,ST RICHARD,Drive,,,Saint Richard Drive,osm_st
+MO,St. Louis,,,,,ST LUKE,Drive,,,Saint Luke Drive,osm_st
+MO,St. Louis,,,,,ST JEAN,Street,,,Saint Jean Street,osm_st
+MO,St. Louis,,,,,ST THOMAS,Court,,,Saint Thomas Court,osm_st
+MO,St. Louis,,,,,ST PATRICE,Lane,,,Saint Patrice Lane,osm_st
+MO,St. Louis,,,,,ST JUDITH,Lane,,,Saint Judith Lane,osm_st
+MO,St. Louis,,,,,ST BRENDAN,Lane,,,Saint Brendan Lane,osm_st
+MO,St. Louis,,,,,ST EDITH,Lane,,,Saint Edith Lane,osm_st
+MO,St. Louis,,,,,RUE ST JACQUES,Street,,,Rue Saint Jacques Street,osm_st
+IL,St. Clair,,,,,ST ROSE,Lane,,,Saint Rose Lane,osm_st
+IL,St. Clair,,,,,ST LEONARD,Drive,,,Saint Leonard Drive,osm_st
+IL,St. Clair,,,,,ST STEPHEN,Drive,,,Saint Stephen Drive,osm_st
+IL,St. Clair,,,,,ST AMBROSE,Drive,,,Saint Ambrose Drive,osm_st
+IL,St. Clair,,,,,ST NORBERT,Drive,,,Saint Norbert Drive,osm_st
+IL,St. Clair,,,,,ST RAPHAEL,Drive,,,Saint Raphael Drive,osm_st
+IL,St. Clair,,,,,ST LUCY,Court,,,Saint Lucy Court,osm_st
+IL,St. Clair,,,,,ST CECELIA,Drive,,,Saint Cecelia Drive,osm_st
+IL,St. Clair,,,,,ST ANN,Circle,,,Saint Ann Circle,osm_st
+IL,St. Clair,,,,,ST JAMES,Lane,,,Saint James Lane,osm_st
+IL,St. Clair,,,,,ST HENRY,Drive,,,Saint Henry Drive,osm_st
+IL,St. Clair,,,,,ST MARGARET,Drive,,,Saint Margaret Drive,osm_st
+IL,St. Clair,,,,,ST MARTIN,Drive,,,Saint Martin Drive,osm_st
+IL,St. Clair,,,,,ST HELENA,Drive,,,Saint Helena Drive,osm_st
+IL,St. Clair,,,,,ST LEO,Drive,,,Saint Leo Drive,osm_st
+IL,St. Clair,,,,,ST DOROTHY,Drive,,,Saint Dorothy Drive,osm_st
+IL,St. Clair,,,,,ST BARBARA,Lane,,,Saint Barbara Lane,osm_st
+IL,St. Clair,,,,,ST ROBERT,Drive,,,Saint Robert Drive,osm_st
+IL,St. Clair,,,,,ST GREGORY,Drive,,,Saint Gregory Drive,osm_st
+IL,St. Clair,,,,,ST PAUL,Drive,,,Saint Paul Drive,osm_st
+IL,St. Clair,,,,,ST ZITA,Drive,,,Saint Zita Drive,osm_st
+IL,St. Clair,,,,,ST JUSTIN,Drive,,,Saint Justin Drive,osm_st
+IL,St. Clair,,,,,ST MATTHEW,Court,,,Saint Matthew Court,osm_st
+IL,St. Clair,,,,,ST MICHAEL,Drive,,,Saint Michael Drive,osm_st
+IL,St. Clair,,,,,ST CHRISTOPHER,Drive,,,Saint Christopher Drive,osm_st
+IL,St. Clair,,,,,ST LAMBERT,Drive,,,Saint Lambert Drive,osm_st
+IL,St. Clair,,,,,ST NICHOLAS,Drive,,,Saint Nicholas Drive,osm_st
+IL,St. Clair,,,,,ST MAUD,Drive,,,Saint Maud Drive,osm_st
+IL,St. Clair,,,,,ST MARCELLA,Drive,,,Saint Marcella Drive,osm_st
+IL,St. Clair,,,,,ST DOROTHY,Court,,,Saint Dorothy Court,osm_st
+IL,St. Clair,,,,,ST THOMAS,Lane,,,Saint Thomas Lane,osm_st
+IL,St. Clair,,,,,ST MATTHEW,Drive,,,Saint Matthew Drive,osm_st
+IL,St. Clair,,,,,ST LUKE,Court,,,Saint Luke Court,osm_st
+IL,St. Clair,,,,,ST MONICA,Drive,,,Saint Monica Drive,osm_st
+IL,St. Clair,,,,,ST WILLIAM,Drive,,,Saint William Drive,osm_st
+IL,St. Clair,,,,,ST JOHN,Drive,,,Saint John Drive,osm_st
+IL,St. Clair,,,,,ST COLUMBA,Drive,,,Saint Columba Drive,osm_st
+LA,Orleans Parish,,,,,ST ROCH,Avenue,,,Saint Roch Avenue,osm_st
+LA,Orleans Parish,,,,,ST ANN,Street,,,Saint Ann Street,osm_st
+LA,Orleans Parish,,,,,ST ANDREW,Street,,,Saint Andrew Street,osm_st
+LA,Orleans Parish,,,,,ST JOHN,Court,,,Saint John Court,osm_st
+LA,Orleans Parish,,,,,ST PHILIP,Street,,,Saint Philip Street,osm_st
+LA,Orleans Parish,,,,,ST ANTHONY,Street,,,Saint Anthony Street,osm_st
+LA,Orleans Parish,,,,,ST CHARLES,Avenue,,,Saint Charles Avenue,osm_st
+LA,Orleans Parish,,,,,ST FERDINAND,Street,,,Saint Ferdinand Street,osm_st
+LA,Orleans Parish,,,,,ST PETER,Street,,,Saint Peter Street,osm_st
+LA,Orleans Parish,,,,,ST JOSEPH,Street,,,Saint Joseph Street,osm_st
+LA,Orleans Parish,,,,,ST CLAUDE,Avenue,,,Saint Claude Avenue,osm_st
+LA,Orleans Parish,,,,,ST BERNARD,Avenue,,,Saint Bernard Avenue,osm_st
+LA,Orleans Parish,,,,,OLD ST BERNARD,Street,,,Old Saint Bernard Street,osm_st
+LA,Orleans Parish,,,,,ST LOUIS,Street,,,Saint Louis Street,osm_st
+IN,Marion,,East,,,St Clair,Street,,,East Saint Clair Street,osm_st
+IN,Marion,,East,,,St Joseph,Street,,,East Saint Joseph Street,osm_st
+IN,Marion,,West,,,St Clair,Street,,,West Saint Clair Street,osm_st
+IN,Marion,,North,,,St Clair,Street,,,North Saint Clair Street,osm_st
+NY,Monroe,,,,,St Paul,Street,,,Saint Paul Street,osm_st
+CT,Southeastern Connecticut Planning Region,,,,,Oak St Mystic,,,,Oak Street Mystic,osm_st
+CT,Southeastern Connecticut Planning Region,,,,,Washington St Mystic,,,,Washington Street Mystic,osm_st
+CT,Southeastern Connecticut Planning Region,,,,,Avery St Mystic,,,,Avery Street Mystic,osm_st
+CT,Southeastern Connecticut Planning Region,,,,,Church St Mystic,,,,Church Street Mystic,osm_st
+CT,Southeastern Connecticut Planning Region,,,,,Summit St Mystic,,,,Summit Street Mystic,osm_st
+CT,Southeastern Connecticut Planning Region,,,,,School St Mystic,,,,School Street Mystic,osm_st
+CT,Naugatuck Valley Planning Region,,,,,Prospect St Wtn,,,,Prospect Street Wtn,osm_st
+CT,Naugatuck Valley Planning Region,,,,,Main St Wtn,,,,Main Street Wtn,osm_st
+KY,Jefferson,,,,,SWAN ST,,,,Swan Street,osm_st
+KY,Jefferson,,,,,LAMPTON ST,,,,Lampton Street,osm_st
+KY,Jefferson,,,,,GWENDOLYN ST,,,,Gwendolyn Street,osm_st
+KY,Jefferson,,,,,CAMP ST,,,,Camp Street,osm_st
+KY,Jefferson,,,,,COKE ST,,,,Coke Street,osm_st
+KY,Jefferson,,,,,SAMUEL ST,,,,Samuel Street,osm_st
+KY,Jefferson,,,,,ASH ST,,,,Ash Street,osm_st
+KY,Jefferson,,,,,S HANCOCK ST,,,,South Hancock Street,osm_st
+KY,Jefferson,,,,,CONRAD ST,,,,Conrad Street,osm_st
+KY,Jefferson,,,,,E KENTUCKY ST,,,,East Kentucky Street,osm_st
+KY,Jefferson,,,,,E ST CATHERINE ST,,,,East Saint Catherine Street,osm_st
+KY,Jefferson,,,,,MARY ST,,,,Mary Street,osm_st
+KY,Jefferson,,,,,S PRESTON ST,,,,South Preston Street,osm_st
+KY,Jefferson,,,,,S CLAY ST,,,,South Clay Street,osm_st
+KY,Jefferson,,,,,HENRY FIRPO ST,,,,Henry Firpo Street,osm_st
+KY,Jefferson,,,,,WATERBURY ST,,,,Waterbury Street,osm_st
+KY,Jefferson,,,,,ST PAUL CT,,,,Saint Paul Court,osm_st
+KY,Jefferson,,,,,ST JOSEPH ST,,,,Saint Joseph Street,osm_st
+KY,Jefferson,,,,,E BRECKINRIDGE ST,,,,East Breckinridge Street,osm_st
+KY,Jefferson,,,,,S SHELBY ST,,,,South Shelby Street,osm_st
+KY,Jefferson,,,,,BERGMAN ST,,,,Bergman Street,osm_st
+KY,Jefferson,,,,,E OAK ST,,,,East Oak Street,osm_st
+KY,Jefferson,,,,,LOGAN ST,,,,Logan Street,osm_st
+KY,Jefferson,,,,,S FLOYD ST,,,,South Floyd Street,osm_st
+KY,Jefferson,,,,,S JACKSON ST,,,,South Jackson Street,osm_st
+KY,Jefferson,,,,,ROLAND ST,,,,Roland Street,osm_st
+KY,Jefferson,,,,,CHARLES ST,,,,Charles Street,osm_st
+KY,Jefferson,,,,,CALDWELL ST,,,,Caldwell Street,osm_st
+KY,Jefferson,,,,,BOYLE ST,,,,Boyle Street,osm_st
+UT,Washington,,East,,,ST GEORGE,Boulevard,,,East Saint George Boulevard,osm_st
+UT,Washington,,West,,,ST GEORGE,Boulevard,,,West Saint George Boulevard,osm_st
+IL,DuPage,,,,,ROYAL ST GEORGE,Drive,,,Royal Saint George Drive,osm_st
+CT,Southeastern Connecticut Planning Region,,,,,Maple St Pawcatuck,,,,Maple Street Pawcatuck,osm_st
+CT,Southeastern Connecticut Planning Region,,,,,Avery St Pawcatuck,,,,Avery Street Pawcatuck,osm_st
+CT,Southeastern Connecticut Planning Region,,,,,Washington St Pawcatuck,,,,Washington Street Pawcatuck,osm_st
+CT,Southeastern Connecticut Planning Region,,,,,Palmer St Pawcatuck,,,,Palmer Street Pawcatuck,osm_st
+CT,Southeastern Connecticut Planning Region,,,,,Main St Stonington,,,,Main Street Stonington,osm_st
+CT,Southeastern Connecticut Planning Region,,,,,Hyde St Stonington,,,,Hyde Street Stonington,osm_st
+CT,Southeastern Connecticut Planning Region,,,,,School St Stonington,,,,School Street Stonington,osm_st
+CT,Southeastern Connecticut Planning Region,,,,,Church St Stonington,,,,Church Street Stonington,osm_st
+CT,Southeastern Connecticut Planning Region,,,,,Trumbull St Stonington,,,,Trumbull Street Stonington,osm_st
+CT,Southeastern Connecticut Planning Region,,,,,Summit St Stonington,,,,Summit Street Stonington,osm_st
+RI,Providence,,,,,ASH ST MANVILLE,,,,Ash Street Manville,osm_st
+RI,Providence,,,,,MAIN ST MANVILLE,,,,Main Street Manville,osm_st
+RI,Providence,,,,,COTTAGE ST MANVILLE,,,,Cottage Street Manville,osm_st
+VT,Orleans,,,,,MAIN ST DERBY,Center,,,Main Street Derby Center,osm_st
+OH,Darke,,,,,JAYSVILLE ST JOHNS,Road,,,Jaysville Saint Johns Road,osm_st
+OH,Darke,,,,,GRNVL ST MARYS BEAMSVILLE,Road,North,,GRNVL Saint Marys Beamsville Road North,osm_st
+OH,Darke,,,,,GRNVL ST MARYS BEAMSVILLE,Road,South,,GRNVL Saint Marys Beamsville Road South,osm_st
+OH,Mercer,,,,,BURKETTSVILLE ST HEN,Road,,,Burkettsville Saint Hen Road,osm_st
+IA,Johnson,,,,,S Johnson St,,,,South Johnson Street,osm_st
+IA,Johnson,,,,,S Clinton St,,,,South Clinton Street,osm_st
+IA,Johnson,,,,,S Lucas St,,,,South Lucas Street,osm_st
+IA,Johnson,,,,,S Governor St,,,,South Governor Street,osm_st
+IA,Johnson,,,,,Page St,,,,Page Street,osm_st
+IA,Johnson,,,,,S Van Buren St,,,,South Van Buren Street,osm_st
+IA,Johnson,,,,,Diana St,,,,Diana Street,osm_st
+IA,Johnson,,,,,Bowery St,,,,Bowery Street,osm_st
+IA,Johnson,,,,,E Washington St,,,,East Washington Street,osm_st
+IA,Johnson,,,,,E College St,,,,East College Street,osm_st
+WI,Milwaukee,,,,,S 97TH ST,,,,South 97th Street,osm_st
+WI,Milwaukee,,,,,S 96TH ST,,,,South 96th Street,osm_st
+WI,Milwaukee,,,,,W BECHER ST,,,,West Becher Street,osm_st
+WI,Milwaukee,,,,,S 91ST ST,,,,South 91st Street,osm_st
+WI,Milwaukee,,,,,S 94TH ST,,,,South 94th Street,osm_st
+WI,Milwaukee,,,,,S 93RD ST,,,,South 93rd Street,osm_st
+WI,Milwaukee,,,,,W ROGERS ST,,,,West Rogers Street,osm_st
+WI,Milwaukee,,,,,S 92ND ST,,,,South 92nd Street,osm_st
+WI,Milwaukee,,,,,S 89TH ST,,,,South 89th Street,osm_st
+WI,Milwaukee,,,,,S 87TH ST,,,,South 87th Street,osm_st
+NC,Richmond,,East,,,WASHINGTON ST EXT,Street,,EXTENSION,East Washington Street Extension,osm_st
+AL,Wilcox,,,,,BROAD ST PINE HILL,,,,Broad Street Pine Hill,osm_st
+IL,St. Clair,,,,,SUMMERFIELD ST JACOB,Road,,,Summerfield Saint Jacob Road,osm_st
+IL,St. Clair,,,,,DAVIS ST FERRY,Road,,,Davis Street Ferry Road,osm_st
+OR,Marion,,,,,12th St Cutoff,,Southeast,,12th Street Cutoff Southeast,osm_st
+NJ,Essex,,,,,Dr Martin Luther King Jr,Boulevard,,,Doctor Martin Luther King Jr Boulevard,osm_dr
+NJ,Camden,,,,,Dr Martin Luther King,Boulevard,,,Doctor Martin Luther King Boulevard,osm_dr
+TN,Davidson,,,,,DR MARTIN L KING JR,Boulevard,,,Doctor Martin L King Jr Boulevard,osm_dr
+TN,Davidson,,,,,DR WALTER S DAVIS,Boulevard,,,Doctor Walter S Davis Boulevard,osm_dr
+IN,Marion,,,,,Dr M L King Jr,Street,,,Doctor M L King Jr Street,osm_dr
+VA,Lee,,,,,Dr Thomas Walker,Road,,,Doctor Thomas Walker Road,osm_dr
+TN,Davidson,,,,,DR D B TODD JR,Boulevard,,,Doctor D B Todd Jr Boulevard,osm_dr
+KY,Jefferson,,,,,DR W J HODGE ST,,,,Doctor W J Hodge Street,osm_dr
+KY,Jefferson,,,,,DR WILLIAM G WEATHERS DR,,,,Doctor William G Weathers Drive,osm_dr
+IN,Marion,,,,,Dr A J Brown,Avenue,,,Doctor A J Brown Avenue,osm_dr
+NY,Monroe,,,,,Dr Samuel McCree,Way,,,Doctor Samuel McCree Way,osm_dr
+MA,Suffolk,,,,,DR. MICHAEL GAVIN,Way,,,Doctor Michael Gavin Way,osm_dr
+OH,Wood,,,,,DR MCAULEY,Court,,,Doctor McAuley Court,osm_dr
+AR,Pulaski,,,,,Dr Martin King Luther Jr,Drive,,,Doctor Martin King Luther Jr Drive,osm_dr
+SC,Oconee,,,,,DR JOHNS,Road,,,Doctor Johns Road,osm_dr
+AL,Mobile,,,,,Dr Thomas,Avenue,North,,Doctor Thomas Avenue North,osm_dr
+AL,Covington,,,,,Dr M L K Jr,Expressway,,,Doctor M L K Jr Expressway,osm_dr
+MA,Barnstable,,,,,DR JULIUS KELLY,Lane,,,Doctor Julius Kelly Lane,osm_dr
+ME,Somerset,,,,,Dr Mann,Road,,,Doctor Mann Road,osm_dr
+SC,York,,,,,DR NICHOLS,Road,,,Doctor Nichols Road,osm_dr
+AL,Barbour,,South,,,Dr T V McCoo,Boulevard,,,South Doctor T V McCoo Boulevard,osm_dr
+NC,Mecklenburg,,,,,DR CARVER,Road,,,Doctor Carver Road,osm_dr
+IL,Williamson,,,,,DR SPRINGS,Road,,,Doctor Springs Road,osm_dr
+MA,Suffolk,,,,,DR. MARY MOORE BEATTY,Circle,,,Doctor Mary Moore Beatty Circle,osm_dr
+CO,Jefferson,,,,,FOOTHILLS DR SOUTH,,,,Foothills Drive South,osm_dr
+TX,Jefferson,,,,,REV DR RANSOM HOWARD,Street,,,Reverend Doctor Ransom Howard Street,osm_dr
+NC,Moore,,,,,DR STREET,Road,,,Doctor Street Road,osm_dr
+NJ,Ocean,,South,,,Dr,,,,South Drive,osm_dr
+WI,Green,,,County Highway,,DR,,,,County Highway DR,osm_dr

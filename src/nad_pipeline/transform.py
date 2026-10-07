@@ -24,7 +24,7 @@ from .rules.street import build_street
 # Each rule's inputs. Results come back as a list: [value, drop_reason, *flags].
 RULES = {
     "street": ["St_PreMod", "St_PreDir", "St_PreTyp", "St_PreSep", "St_Name",
-               "St_PosTyp", "St_PosDir", "St_PosMod"],
+               "St_PosTyp", "St_PosDir", "St_PosMod", "State", "County"],
     "housenumber": ["AddNum_Pre", "Add_Number", "AddNum_Suf"],
     "unit": ["Unit", "Building"],
     "city": ["Post_City", "Inc_Muni", "Uninc_Comm", "State", "County"],
@@ -33,9 +33,11 @@ RULES = {
 
 
 def _rule_functions(names: PlaceNames) -> dict:
-    def street(pre_mod, pre_dir, pre_type, pre_sep, name, post_type, post_dir, post_mod):
+    def street(pre_mod, pre_dir, pre_type, pre_sep, name, post_type, post_dir, post_mod,
+               state, county):
         value, flags = build_street(
-            pre_mod, pre_dir, pre_type, pre_sep, name, post_type, post_dir, post_mod)
+            pre_mod, pre_dir, pre_type, pre_sep, name, post_type, post_dir, post_mod,
+            state, county)
         return [value, flags[0], *flags] if value is None else [value, None, *flags]
 
     def housenumber(prefix, number, suffix):

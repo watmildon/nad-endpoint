@@ -4,7 +4,7 @@ import duckdb
 import pytest
 
 from nad_pipeline import ingest
-from nad_pipeline.rules.city import PlaceNames, choose_city, city_key
+from nad_pipeline.rules.city import PlaceNames, choose_city, city_key, edit_distance
 from nad_pipeline.transform import osm_glob, report_dir, transform_dir
 
 from conftest import FIXTURE_ROWS
@@ -84,6 +84,9 @@ NAMES_AZ = PlaceNames([
     # ...unless the city really shares the county's name.
     (("DENTON", None, None), "TX", "Denton", "Denton", []),
     (("ATL", None, None), "GA", "Fulton", "Atlanta", []),
+    (("HILL AFB", None, None), "UT", "Davis", "Hill AFB",
+     ["city_not_in_reference", "city_cased_by_rule"]),
+    (("MATCHED", "Unincorporated", None), "ME", "Aroostook", None, ["no_city"]),
     (("HOT SPRINGS NATIONAL PARK", None, None), "AR", "Garland", "Hot Springs National Park",
      ["city_not_in_reference", "city_cased_by_rule"]),
     (("ISLE OF PALMS", None, None), "SC", "Charleston", "Isle of Palms",
@@ -98,6 +101,78 @@ def test_choose_city_multi_input(fields, state, county, expected, flags):
 def test_reference_conflict_resolved_by_vote():
     assert NAMES.lookup("MO", "SAINT LOUIS") == "St. Louis"
     assert NAMES.conflicts == [("MO", "St. Louis", {"St. Louis": 2, "Saint Louis": 1})]
+
+
+@pytest.mark.parametrize("a, b", [
+    ("ESPANOLA", "Española"), ("PENASCO", "Peñasco"), ("CANONES", "Cañones"),
+    ("E CARONDELET", "East Carondelet"), ("S. Paris", "South Paris"),
+    ("THOMPSONS STATION", "Thompson's Station"), ("S.N.P.J.", "SNPJ"),
+])
+def test_city_key_folds_accents_and_leading_directions(a, b):
+    assert city_key(a) == city_key(b)
+
+
+@pytest.mark.parametrize("a, b", [
+    # A trailing possessive "s" is not South; an initialism's first letter is not either.
+    ("THOMPSONS STATION", "Thompson South Station"), ("S.N.P.J.", "South NPJ"),
+])
+def test_city_key_keeps_possessives_and_initialisms(a, b):
+    assert city_key(a) != city_key(b)
+
+
+@pytest.mark.parametrize("a, b, distance", [
+    ("misison", "mission", 1), ("coben", "cobden", 1), ("frazysburg", "frazeysburg", 1),
+    ("plain", "plains", 1), ("hartsville", "hartselle", 2), ("adk", "atlanta", 6),
+    ("", "abc", 3),
+])
+def test_edit_distance(a, b, distance):
+    assert edit_distance(a, b) == distance == edit_distance(b, a)
+
+
+NAMES_POSTAL = PlaceNames([
+    ("NM", "Española", "census_place"), ("NM", "Hernandez", "census_place"),
+    ("PA", "Whitemarsh Township", "census_cousub"), ("NY", "Cortlandt", "census_cousub"),
+    ("NY", "Harrison", "census_cousub"), ("IN", "West Harrison", "census_place"),
+    ("AR", "Hot Springs", "census_place"), ("AZ", "Phoenix", "census_place"),
+    ("IL", "Cobden", "census_place"), ("IL", "East Carondelet", "census_place"),
+    ("MT", "Plains", "census_place"), ("WA", "Plain", "gnis"), ("GA", "Atlanta", "census_place"),
+    ("SD", "Mission", "census_place"), ("SD", "Antelope", "census_place"),
+    ("KY", "Wayland", "census_place"),
+])
+
+
+@pytest.mark.parametrize("fields, state, expected, flags", [
+    # Accents: the postal city is a known place, so the community does not replace it.
+    (("ESPANOLA", "ESPANOLA", "HERNANDEZ"), "NM", "Española", []),
+    # Real USPS names missing from the reference are kept, not replaced by the municipality.
+    (("Lafayette Hill", "Whitemarsh Township", None), "PA", "Lafayette Hill",
+     ["city_not_in_reference"]),
+    (("Cortlandt Manor", "Cortlandt", None), "NY", "Cortlandt Manor", ["city_not_in_reference"]),
+    (("CORTLANDT MANOR", "CORTLANDT", None), "NY", "Cortlandt Manor",
+     ["city_not_in_reference", "city_cased_by_rule"]),
+    (("West Harrison", "Harrison", None), "NY", "West Harrison", []),
+    (("Hot Springs National Park", "Hot Springs", None), "AR", "Hot Springs National Park",
+     ["city_not_in_reference"]),
+    (("Hueysville", "UNINCORPORATED", "Wayland"), "KY", "Hueysville", ["city_not_in_reference"]),
+    # Arizona's postal city holds station names, with or without the city's name in them.
+    (("SOUTH MOUNTAIN", "PHOENIX", None), "AZ", "Phoenix",
+     ["city_from_inc_muni", "unknown_post_city_skipped"]),
+    # Misspellings of the municipality, even one that is a place elsewhere ("Plain", WA).
+    (("COBEN", "COBDEN", None), "IL", "Cobden",
+     ["city_from_inc_muni", "unknown_post_city_skipped"]),
+    (("Plain", "Plains", None), "MT", "Plains",
+     ["city_from_inc_muni", "unknown_post_city_skipped"]),
+    # A misspelling of another place in the state.
+    # A one-edit resemblance to another place is not enough to replace a postal city.
+    (("MISISON", "Unincorporated", "ANTELOPE"), "SD", "Misison",
+     ["city_not_in_reference", "city_cased_by_rule"]),
+    # Office codes.
+    (("ADK", "ATLANTA", None), "GA", "Atlanta",
+     ["city_from_inc_muni", "unknown_post_city_skipped"]),
+    (("E CARONDELET", "EAST CARONDELET", None), "IL", "East Carondelet", []),
+])
+def test_choose_city_unknown_postal_city(fields, state, expected, flags):
+    assert choose_city(*fields, state, NAMES_POSTAL) == (expected, flags)
 
 
 @pytest.fixture

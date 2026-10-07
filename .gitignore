@@ -19,3 +19,6 @@ AGENTS.md
 .cursorrules
 .aider*
 .github/copilot-instructions.md
+
+# Cloudflare wrangler local state
+.wrangler/
