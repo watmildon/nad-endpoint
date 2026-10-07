@@ -1,5 +1,5 @@
 """Command line entry point. Stages in order:
-nad fetch | ingest | profile | refdata | transform | supplement | backfill | dedup | export."""
+nad fetch | ingest | profile | refdata | transform | supplement | backfill | dedup | export | publish."""
 
 import argparse
 import sys
@@ -52,7 +52,8 @@ def main(argv=None):
     for name, text in (("supplement", "fill missing cities from original state datasets"),
                        ("backfill", "fill missing city and postcode from Census polygons"),
                        ("dedup", "mark duplicate address points"),
-                       ("export", "build the PMTiles tileset of kept points")):
+                       ("export", "build the PMTiles tileset of kept points"),
+                       ("publish", "upload the tileset to Cloudflare R2")):
         p = sub.add_parser(name, help=text)
         p.add_argument("--release", help="release, e.g. r24 (default: newest)")
     args = parser.parse_args(argv)
@@ -102,6 +103,11 @@ def main(argv=None):
         from .export import export
 
         print(export(args.release or _latest_release()))
+    elif args.command == "publish":
+        from .publish import publish
+
+        for url in publish(args.release or _latest_release()):
+            print(url)
 
 
 if __name__ == "__main__":

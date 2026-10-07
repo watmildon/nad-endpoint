@@ -5,7 +5,7 @@ import duckdb
 import pytest
 
 from nad_pipeline import config, export
-from nad_pipeline.export import build_pmtiles, tippecanoe_command, write_flatgeobuf
+from nad_pipeline.export import build_pmtiles, tippecanoe_command, write_geojson
 
 from test_backfill_dedup import row, write_points
 
@@ -20,9 +20,10 @@ def addresses(tmp_path):
     ])
 
 
-def test_flatgeobuf_per_state_with_osm_tags(tmp_path, addresses):
-    paths = write_flatgeobuf(addresses, tmp_path / "fgb")
-    assert [p.name for p in paths] == ["IN.fgb", "RI.fgb"]
+def test_geojson_per_state_with_osm_tags(tmp_path, addresses):
+    paths = write_geojson(addresses, tmp_path / "geojson")
+    assert [p.name for p in paths] == ["IN.geojsonl", "RI.geojsonl"]
+    assert '"id"' not in paths[0].read_text(encoding="utf-8")
     con = duckdb.connect()
     con.execute("LOAD spatial")
     rows = con.execute(
@@ -38,21 +39,22 @@ def test_flatgeobuf_per_state_with_osm_tags(tmp_path, addresses):
 
 def test_tippecanoe_command_keeps_every_point_at_max_zoom(tmp_path, monkeypatch):
     monkeypatch.setattr(export, "_use_wsl", lambda: False)
-    cmd = tippecanoe_command([tmp_path / "IN.fgb"], tmp_path / "out.pmtiles", "r24")
+    cmd = tippecanoe_command([tmp_path / "IN.geojsonl"], tmp_path / "out.pmtiles", "r24")
     assert cmd[0] == "tippecanoe"
     assert "--no-feature-limit" in cmd and "--no-tile-size-limit" in cmd
+    assert "--buffer=0" in cmd and "--no-duplication" in cmd
     assert f"-z{export.MAX_ZOOM}" in cmd
     assert cmd[cmd.index("-l") + 1] == "addresses"
-    assert cmd[-1].endswith("/IN.fgb")
+    assert cmd[-1].endswith("/IN.geojsonl")
 
 
 def test_tippecanoe_runs_in_wsl_on_windows(tmp_path, monkeypatch):
     monkeypatch.setattr(export, "_use_wsl", lambda: True)
     monkeypatch.setattr(sys, "platform", "win32")
-    cmd = tippecanoe_command([tmp_path / "IN.fgb"], tmp_path / "out.pmtiles", "r24")
+    cmd = tippecanoe_command([tmp_path / "IN.geojsonl"], tmp_path / "out.pmtiles", "r24")
     assert cmd[:3] == ["wsl.exe", "-e", "tippecanoe"]
     drive = tmp_path.drive.rstrip(":").lower()
-    assert cmd[-1].startswith(f"/mnt/{drive}/") and cmd[-1].endswith("/IN.fgb")
+    assert cmd[-1].startswith(f"/mnt/{drive}/") and cmd[-1].endswith("/IN.geojsonl")
 
 
 def test_export_writes_tiles_and_metadata(tmp_path, addresses, monkeypatch):

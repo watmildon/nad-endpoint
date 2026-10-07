@@ -26,18 +26,23 @@ def build_housenumber(prefix, number, suffix):
     prefix, number, suffix = clean(prefix), clean(number), clean(suffix)
     if number is None:
         return None, [], "no_housenumber"
-    if prefix and prefix.casefold() in ("milepost", "mile post", "mp", "mm"):
+    if prefix and prefix.casefold() in ("milepost", "mile post", "mile marker", "mp", "mm"):
         return None, [], "milepost_address"
-    if suffix and suffix.upper() == "BLK":
+    if (suffix and suffix.upper() == "BLK") or (prefix and prefix.casefold() == "block"):
         return None, [], "block_address"
+    if prefix and len(prefix) > 4 and not any(c.isdigit() for c in prefix):
+        # Words in the prefix field ("BILLBD", a street name) are not part of a number.
+        return None, [], "unparsed_housenumber"
     flags = []
-    if not prefix and not suffix and not number.strip("0"):
+    if number.isdigit():
+        number = number.lstrip("0") or "0"
+    if not prefix and not number.strip("0") and (not suffix or suffix.isalpha()):
         return None, [], "zero_housenumber"
     if prefix and prefix.endswith("-"):
         # Queens-style hyphenated numbers keep two digits after the hyphen (89-02).
         value = prefix + number.zfill(2)
-    elif prefix and len(prefix) <= 4 and " " not in prefix:
-        value = prefix + number  # grid prefixes such as N, W, 0N
+    elif prefix and len(prefix) <= 6 and " " not in prefix:
+        value = prefix + number  # grid prefixes such as N, W, 0N, W156N
     elif prefix:
         value = f"{prefix} {number}"
     else:
@@ -82,7 +87,7 @@ def clean_postcode(zip_code, state=None):
     if value is None:
         return None, []
     digits = re.sub(r"[\s-]", "", value)
-    if re.fullmatch(r"\d{5}(\d{4})?", digits) and digits[:5] not in ("00000", "99999"):
+    if re.fullmatch(r"\d{5}(\d{4})?", digits) and "00501" <= digits[:5] <= "99950":
         return digits[:5], []
     if re.fullmatch(r"\d{4}", digits) and state in LEADING_ZERO_ZIP_STATES:
         return "0" + digits, ["postcode_zero_restored"]

@@ -29,10 +29,16 @@ client may rely on is stated here; anything not stated may change between releas
 | Geometry | points only |
 | Extent | 4096 per tile (MVT default) |
 
-Zoom 14 is **complete**: every published point is present in exactly one zoom-14 tile. Zooms
-10–13 are thinned for display and must not be used for editing or counting. A client that
-wants the data for an area must enumerate the zoom-14 tiles covering the area's bounding
-box, fetch each, and read the `addresses` layer.
+Zoom 14 is **complete**: every published point is present in exactly one zoom-14 tile. The
+tiles are built with no edge buffer and no duplication at tile seams, so the sum of features
+over all zoom-14 tiles equals the published point count. A point that falls on a tile's
+edge has a tile coordinate of 0 or exactly `extent` (4096); it is still a real point that
+appears nowhere else, so clients must keep features whose coordinates lie in the closed
+range `[0, extent]` and must not discard them as buffer copies.
+
+Zooms 10–13 are thinned for display and must not be used for editing or counting. A client
+that wants the data for an area must enumerate the zoom-14 tiles covering the area's
+bounding box, fetch each, and read the `addresses` layer.
 
 Read the minimum and maximum zoom from the PMTiles header rather than hard-coding them; a
 later release may move the complete zoom to 15 if dense tiles grow too large.
@@ -42,8 +48,9 @@ compressed. Clients should fetch tiles concurrently and should not assume a per-
 
 ## 3. Features
 
-Each feature is one address point. A feature has no stable id: the MVT `id` field is absent.
-Identity across releases is not provided in this tileset (section 8).
+Each feature is one address point. The MVT `id` field is not set on any feature; a decoder
+that reports a default id of 0 is reporting its own default. Identity across releases is not
+provided in this tileset (section 8).
 
 ### Properties
 
@@ -89,6 +96,17 @@ Audit data (the NAD record UUID, source agency, placement, update date, and the 
 that say what the pipeline changed or doubted) is deliberately not in this tileset, because
 some consumers copy every property to OSM. It is available in the pipeline's Parquet
 output and may be published as a separate tileset with the same tile layout later.
+
+## 4a. Coverage
+
+The tileset covers what the NAD release covers, which is not the whole country. In r24
+there are no points at all for Hawaii, Michigan, Mississippi, Nevada, New Hampshire, Puerto
+Rico, Guam, American Samoa or the Northern Mariana Islands, and several covered states are
+partial (Florida has about 43K points, Georgia about 205K, California and Pennsylvania a
+fraction of their addresses). The US Virgin Islands are present in the source but almost
+entirely with a "Proposed" lifecycle, which the pipeline excludes, so only a handful of
+points remain. Coverage changes with each release; the sidecar's `points` count is the
+only summary the tileset itself gives.
 
 ## 5. Derived values
 

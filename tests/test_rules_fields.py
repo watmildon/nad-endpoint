@@ -19,6 +19,9 @@ from nad_pipeline.rules.fields import (
     ("W", "235", "A", "W235 A"),
     ("0N", "456", None, "0N456"),
     (None, "55", "LOT", "55"),
+    (None, "0021", None, "21"),
+    ("0N", "801", None, "0N801"),
+    ("W156N", "8120", None, "W156N8120"),
 ])
 def test_build_housenumber(prefix, number, suffix, expected):
     value, _, drop = build_housenumber(prefix, number, suffix)
@@ -29,7 +32,13 @@ def test_build_housenumber(prefix, number, suffix, expected):
     (None, None, None, "no_housenumber"),
     (None, "0", None, "zero_housenumber"),
     ("Milepost", "116", ".7", "milepost_address"),
+    ("Mile Marker", "1", None, "milepost_address"),
     (None, "100", "BLK", "block_address"),
+    ("Block", "300", None, "block_address"),
+    ("BILLBD", "416", None, "unparsed_housenumber"),
+    ("West Griffith Street East Spring", "12", None, "unparsed_housenumber"),
+    (None, "0", "R", "zero_housenumber"),
+    (None, "000", None, "zero_housenumber"),
 ])
 def test_housenumber_drops(prefix, number, suffix, reason):
     assert build_housenumber(prefix, number, suffix) == (None, [], reason)
@@ -77,6 +86,8 @@ def test_unit_falls_back_to_building():
     ("0", "TX", None, []),
     ("00000", "TX", None, []),
     ("99999", "TX", None, ["bad_postcode"]),
+    ("00130", "ME", None, ["bad_postcode"]),
+    ("00501", "NY", "00501", []),
     ("5151436", "IA", None, ["bad_postcode"]),
     ("WISE", "TX", None, ["bad_postcode"]),
     (None, "TX", None, []),

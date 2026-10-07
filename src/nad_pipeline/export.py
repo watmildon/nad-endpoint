@@ -4,7 +4,9 @@ Consumers (the JOSM MapWithAI plugin, Rapid) read features at the tileset's maxi
 and turn properties into OSM tags, so the tiles carry only the addr:* tags, and the maximum
 zoom holds every point. Lower zooms are thinned and exist for viewing.
 
-Tiles are built with tippecanoe, which on Windows runs inside WSL.
+Tiles are built with tippecanoe, which on Windows runs inside WSL. The input is
+newline-delimited GeoJSON rather than FlatGeobuf because tippecanoe copies FlatGeobuf
+feature ids into the tiles, and those are meaningless row numbers.
 """
 
 import json
@@ -37,8 +39,8 @@ def export_dir(release: str) -> Path:
     return config.release_dir(release) / "export"
 
 
-def write_flatgeobuf(addresses_dir: Path, out_dir: Path) -> list[Path]:
-    """One FlatGeobuf per state holding the kept rows with their OSM tags."""
+def write_geojson(addresses_dir: Path, out_dir: Path) -> list[Path]:
+    """One newline-delimited GeoJSON file per state with the kept rows and their OSM tags."""
     out_dir.mkdir(parents=True, exist_ok=True)
     con = duckdb.connect()
     con.execute("LOAD spatial")
@@ -49,14 +51,14 @@ def write_flatgeobuf(addresses_dir: Path, out_dir: Path) -> list[Path]:
     columns = ", ".join(f'{col} AS "{tag}"' for tag, col in TAGS.items())
     paths = []
     for state in states:
-        path = out_dir / f"{state}.fgb"
+        path = out_dir / f"{state}.geojsonl"
         con.execute(
             f"""
             COPY (
                 SELECT ST_Point(lon, lat) AS geom, {columns}
                 FROM read_parquet('{osm_glob(addresses_dir)}', hive_partitioning = false)
                 WHERE drop_reason IS NULL AND addr_state = '{state}'
-            ) TO '{path.as_posix()}' WITH (FORMAT GDAL, DRIVER 'FlatGeobuf', SRS 'EPSG:4326')
+            ) TO '{path.as_posix()}' WITH (FORMAT GDAL, DRIVER 'GeoJSONSeq', SRS 'EPSG:4326')
             """
         )
         paths.append(path)
@@ -73,7 +75,9 @@ def tippecanoe_command(inputs: list[Path], output: Path, release: str) -> list[s
         f"-Z{MIN_ZOOM}", f"-z{MAX_ZOOM}",
         # Every point survives at the maximum zoom; lower zooms are thinned for display.
         "--no-feature-limit", "--no-tile-size-limit", "--drop-densest-as-needed",
-        "--quiet", *[_tool_path(p) for p in inputs],
+        # Each point goes in exactly one tile: no edge buffer, no copies at tile seams.
+        "--buffer=0", "--no-duplication",
+        "-P", "--quiet", *[_tool_path(p) for p in inputs],
     ]
     if _use_wsl():
         return ["wsl.exe", "-e", *args]
@@ -88,7 +92,7 @@ def build_pmtiles(inputs: list[Path], output: Path, release: str, run=subprocess
 def export(release: str, run=subprocess.run) -> Path:
     rel = config.release_dir(release)
     out = export_dir(release)
-    inputs = write_flatgeobuf(rel / "addresses", out / "fgb")
+    inputs = write_geojson(rel / "addresses", out / "geojson")
     pmtiles = build_pmtiles(inputs, out / f"nad-{release}.pmtiles", release, run)
     con = duckdb.connect()
     points = con.execute(

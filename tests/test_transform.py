@@ -75,6 +75,11 @@ NAMES_AZ = PlaceNames([
     (("INCORPORATED", None, None), "ID", "Ada", None, ["no_city"]),
     # Descriptors appended to a known place name are removed.
     (("MESA CITY", None, None), "AZ", "Maricopa", "Mesa", []),
+    (("Mesa 85201", None, None), "AZ", "Maricopa", "Mesa", []),
+    (("971Xx", "MESA", None), "AZ", "Maricopa", "Mesa", ["city_from_inc_muni"]),
+    (("Us 12 W", None, None), "WA", "Lewis", None, ["no_city"]),
+    (("T1 R9 WELS", None, None), "ME", "Penobscot", "T1 R9 Wels",
+     ["city_not_in_reference", "city_cased_by_rule"]),
     (("Omaha Area", None, None), "NE", "Douglas", "Omaha", []),
     # ...unless the city really shares the county's name.
     (("DENTON", None, None), "TX", "Denton", "Denton", []),

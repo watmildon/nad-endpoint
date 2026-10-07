@@ -18,6 +18,9 @@ _GOVERNMENT_PREFIX = re.compile(r"^(city|town|village|borough|township) of ", re
 _DESCRIPTOR_SUFFIX = re.compile(
     r"\s+(city|town|village|borough|boro|township|twp|area|cpu)$", re.IGNORECASE)
 _COUNTY_SUFFIX = re.compile(r"\s+(county|co)$", re.IGNORECASE)
+_TRAILING_ZIP = re.compile(r"\s+\d{5}(-\d{4})?$")
+# Maine's unorganized townships are named like "T1 R9 WELS"; digits elsewhere mean junk.
+_DIGITS_ALLOWED = {"ME"}
 SOURCE_PRIORITY = ["census_place", "gnis", "census_cousub", "wikidata"]
 
 
@@ -66,6 +69,7 @@ def _candidate(raw, state, county, names: PlaceNames) -> str | None:
     if value is None or value.casefold() in CITY_PLACEHOLDERS:
         return None
     value = _GOVERNMENT_PREFIX.sub("", value)
+    value = _TRAILING_ZIP.sub("", value)  # "Sonora 76950"
     if state:  # "Covington Ky", "West Bend, WI"
         value = re.sub(rf",?\s+{state}$", "", value, flags=re.IGNORECASE) or value
     if names.lookup(state, value, national=False):
@@ -77,6 +81,8 @@ def _candidate(raw, state, county, names: PlaceNames) -> str | None:
         return None  # a ZIP code or a county in the city field
     if county and city_key(value) == city_key(county):
         return None
+    if re.search(r"\d", value) and state not in _DIGITS_ALLOWED:
+        return None  # "971Xx", "Us 12 W", "Green Twp Area 1"
     return value
 
 
