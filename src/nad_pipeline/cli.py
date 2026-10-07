@@ -1,5 +1,5 @@
-"""Command line entry point: nad fetch | ingest | profile | refdata | transform | backfill
-| dedup."""
+"""Command line entry point. Stages in order:
+nad fetch | ingest | profile | refdata | transform | supplement | backfill | dedup."""
 
 import argparse
 import sys
@@ -49,7 +49,8 @@ def main(argv=None):
     sub.add_parser("refdata", help="download and build the place name reference")
     p = sub.add_parser("transform", help="apply the field rules and write OSM-tagged points")
     p.add_argument("--release", help="release to transform, e.g. r24 (default: newest)")
-    for name, text in (("backfill", "fill missing city and postcode from Census polygons"),
+    for name, text in (("supplement", "fill missing cities from original state datasets"),
+                       ("backfill", "fill missing city and postcode from Census polygons"),
                        ("dedup", "mark duplicate address points")):
         p = sub.add_parser(name, help=text)
         p.add_argument("--release", help="release, e.g. r24 (default: newest)")
@@ -84,6 +85,10 @@ def main(argv=None):
         print(transform(release))
         for path in report(release):
             print(path)
+    elif args.command == "supplement":
+        from .supplement import supplement
+
+        print(supplement(args.release or _latest_release()))
     elif args.command == "backfill":
         from .backfill import backfill
 

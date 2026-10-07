@@ -1,4 +1,4 @@
-"""Stage 5: fill missing city and postcode from Census polygons.
+"""Stage 6: fill missing city and postcode from Census polygons.
 
 Only rows the transform left without a value are touched, and each fill is flagged
 (city_from_census_place, city_from_census_cousub, postcode_from_zcta) because the value is
@@ -34,7 +34,7 @@ def backfill(release: str) -> Path:
     rel = config.release_dir(release)
     ref = refdata.reference_dir()
     return backfill_dir(
-        rel / "osm", rel / "filled",
+        rel / "supplemented", rel / "filled",
         places=refdata.boundary_file(ref, "place"),
         cousubs=refdata.boundary_file(ref, "cousub"),
         zctas=refdata.boundary_file(ref, "zcta"),

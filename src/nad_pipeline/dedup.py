@@ -1,4 +1,4 @@
-"""Stage 6: mark duplicate address points.
+"""Stage 7: mark duplicate address points.
 
 Two kept rows are duplicates when they have the same state, county, house number, street
 and unit and lie within NEAR_METERS of each other. The best one stays (most precise
