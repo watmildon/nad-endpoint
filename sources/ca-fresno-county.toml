@@ -1,0 +1,32 @@
+state = "CA"
+name = "Fresno County regional address points (REGIONAL_ADDRESS_VW)"
+publisher = "County of Fresno / City of Fresno GIS data sharing"
+notes = "OpenAddresses' licence field points to a public-records-request page; the CC0 is on the ArcGIS item itself. ADDRESS_STATUS and ADDRESS_MAILABLE exist and could filter retired records later."
+
+[access]
+protocol = "arcgis"
+url = "https://services3.arcgis.com/ibgDyuD2DLBge82s/arcgis/rest/services/REGIONAL_ADDRESS_VW/FeatureServer/1"
+page = "https://datasharing-cofgisonline.hub.arcgis.com/pages/our-data"
+refresh = "live (edited 2026-10-01 at verification)"
+
+[licence]
+name = "CC0"
+class = "cc0"
+source = "ArcGIS Online item aec096ac4c1543c0bb3598523634db33, licenseInfo field"
+quote = "CC0"
+verified = 2026-10-07
+osm_clearance = "licence"
+
+[fields]
+id = "ADDRESS_AGENCY_UNIQUE_ID"
+Add_Number = "ADDRESS_NUMBER"
+AddNum_Suf = "ADDRESS_FRACTION"
+St_PreDir = "STREET_DIRECTION"
+St_Name = "STREET_NAME"
+St_PosTyp = "STREET_TYPE"
+St_PosDir = "STREET_POST_DIRECTION"
+Unit = "ADDRESS_UNIT"
+Post_City = "ADDRESS_ZIPCITY"
+Zip_Code = "ADDRESS_ZIP5"
+Longitude = "_lon"
+Latitude = "_lat"

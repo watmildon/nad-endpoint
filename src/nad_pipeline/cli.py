@@ -49,6 +49,9 @@ def main(argv=None):
     sub.add_parser("refdata", help="download and build the place name reference")
     p = sub.add_parser("transform", help="apply the field rules and write OSM-tagged points")
     p.add_argument("--release", help="release to transform, e.g. r24 (default: newest)")
+    p = sub.add_parser("sources", help="fetch the extra sources in sources/*.toml")
+    p.add_argument("--release", help="release to attach them to (default: newest)")
+    p.add_argument("--only", nargs="*", help="source ids to build (default: all)")
     for name, text in (("supplement", "fill missing cities from original state datasets"),
                        ("backfill", "fill missing city and postcode from Census polygons"),
                        ("dedup", "mark duplicate address points"),
@@ -86,6 +89,11 @@ def main(argv=None):
         release = args.release or _latest_release()
         print(transform(release))
         for path in report(release):
+            print(path)
+    elif args.command == "sources":
+        from .sources import build
+
+        for path in build(args.release or _latest_release(), args.only):
             print(path)
     elif args.command == "supplement":
         from .supplement import supplement

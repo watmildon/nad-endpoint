@@ -282,11 +282,26 @@ def add_ordinal(name: str, pre_type, post_type, state, county):
     return name, ["numeric_street_name"]
 
 
+def _field_direction(value):
+    if value is None:
+        return None
+    return DIRECTIONS.get(_bare(value)) or smart_title(value)
+
+
+def _field_type(value):
+    if value is None:
+        return None
+    return TRAILING_TYPES.get(_bare(value)) or smart_title(value)
+
+
 def build_street(pre_mod, pre_dir, pre_type, pre_sep, name, post_type, post_dir, post_mod,
                  state=None, county=None):
     """Return (addr:street, flags). The street is None when there is no usable name."""
     pre_mod, pre_dir, pre_type, pre_sep = map(clean, (pre_mod, pre_dir, pre_type, pre_sep))
     name, post_type, post_dir, post_mod = map(clean, (name, post_type, post_dir, post_mod))
+    # NAD delivers these fields spelled out; extra sources deliver USPS abbreviations.
+    pre_dir, post_dir = _field_direction(pre_dir), _field_direction(post_dir)
+    pre_type, post_type = _field_type(pre_type), _field_type(post_type)
     state, county = clean(state), clean(county)
     if name is None and pre_type is None:
         return None, ["no_street_name"]

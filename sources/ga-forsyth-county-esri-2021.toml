@@ -1,0 +1,29 @@
+state = "GA"
+name = "Forsyth County, GA Addresses (Esri Community Maps snapshot, February 2021)"
+publisher = "Forsyth County via Esri Community Maps Contributors"
+notes = "The county's own current layer prohibits sale without written permission; this snapshot is the usable one."
+
+[access]
+protocol = "arcgis"
+url = "https://services6.arcgis.com/Do88DoK2xjTUCXd1/arcgis/rest/services/Forsyth_County_GA_Addresses/FeatureServer/0"
+page = "https://www.arcgis.com/home/item.html?id=0641b86ab0f449d990278a5df8066036"
+refresh = "static snapshot (data edited 2021-06-10)"
+
+[licence]
+name = "CC BY 4.0 with Esri's waiver for OpenStreetMap"
+class = "osm-waiver"
+source = "ArcGIS Online item 0641b86ab0f449d990278a5df8066036, licenseInfo field; OSM wiki Import/Forsyth_County,_Georgia_Addresses"
+quote = "Esri waives Section 2(a)(5)(B) of the CC BY 4.0 license as to OpenStreetMap and its users"
+verified = 2026-10-07
+osm_clearance = "wiki"
+osm_clearance_url = "https://wiki.openstreetmap.org/wiki/Import/Forsyth_County,_Georgia_Addresses"
+
+[fields]
+id = "OBJECTID"
+Add_Number = "addr_housenumber"
+St_Name = "addr_street"
+Unit = "addr_unit"
+Post_City = "addr_city"
+Zip_Code = "addr_postcode"
+Longitude = "_lon"
+Latitude = "_lat"

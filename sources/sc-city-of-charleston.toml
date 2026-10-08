@@ -1,0 +1,32 @@
+state = "SC"
+name = "City of Charleston addresses"
+publisher = "City of Charleston GIS"
+notes = "City limits only; Charleston County beyond the city has no cleared source."
+
+[access]
+protocol = "arcgis"
+url = "https://services2.arcgis.com/tQaXW7Zb1Vphzvgd/arcgis/rest/services/City_Addresses/FeatureServer/0"
+page = "https://data-charleston-sc.opendata.arcgis.com/datasets/de0b28822e3b49809fcbd74de2d392fc_0/about"
+refresh = "live (edited 2026-10-07 at verification)"
+
+[licence]
+name = "Public domain under the City of Charleston Open Data Policy"
+class = "public-domain"
+source = "City of Charleston Open Data Policy, Exhibit A (as of June 1 2026), section 4b, linked from https://www.charleston-sc.gov/1570/Open-Data"
+quote = "Published datasets shall be placed into the public domain. Dedicating datasets to the public domain means that there are no restrictions or requirements placed on use of these datasets."
+verified = 2026-10-07
+osm_clearance = "licence"
+
+[fields]
+id = "ADDRESSID"
+Add_Number = "HOUSENO"
+AddNum_Suf = "HOUSESUF"
+St_PreDir = "PREDIR"
+St_Name = "STNAME"
+St_PosTyp = "STTYPE"
+St_PosDir = "SUFDIR"
+Unit = "UNIT"
+Post_City = "CMTYNAME"
+Zip_Code = "ZIPCODE"
+Longitude = "_lon"
+Latitude = "_lat"

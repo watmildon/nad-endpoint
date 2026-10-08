@@ -1,0 +1,32 @@
+state = "LA"
+name = "Jefferson Parish address points"
+publisher = "Jefferson Parish GIS (JeffMap)"
+notes = "The weakest clearance in the registry: an informal email, not a licence. No city column; the postal city comes from the ZIP polygon backfill. Already imported to OSM in 2022, so expect heavy overlap with existing OSM addresses."
+
+[access]
+protocol = "arcgis"
+url = "https://webmap.jeffparish.net/arcgis/rest/services/CODE/Code_Enforcement/MapServer/5"
+page = "http://geoportal.jeffparish.net/public"
+refresh = "live"
+workers = 1  # the parish server answers 403 to parallel page requests
+
+[licence]
+name = "No licence stated; permission for OSM use recorded on the OSM wiki"
+class = "osm-permission"
+source = "OSM wiki Import/Catalogue/Jefferson_Parish_Addresses_and_Buildings, which records an email reply from JeffMap@jeffparish.net on 2022-04-20"
+quote = "There is no explicit license listed, only a disclaimer. [Asked about attribution or copyright obligations, the parish replied:] None that I am aware of currently"
+verified = 2026-10-07
+osm_clearance = "wiki"
+osm_clearance_url = "https://wiki.openstreetmap.org/wiki/Import/Catalogue/Jefferson_Parish_Addresses_and_Buildings"
+
+[fields]
+id = "OBJECTID"
+Add_Number = "ADDRESS"
+St_PreDir = "PREDIR"
+St_Name = "STREET_NAME"
+St_PosTyp = "ST_TYPE"
+St_PosDir = "SUFDIR"
+Unit = "SUITE"
+Zip_Code = "ZIP"
+Longitude = "_lon"
+Latitude = "_lat"

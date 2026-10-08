@@ -36,7 +36,7 @@ def write_points(path, rows):
 def read_points(path, columns):
     rows = duckdb.sql(
         f"SELECT {columns} FROM read_parquet('{osm_glob(path)}', hive_partitioning = false) "
-        "ORDER BY CAST(nad_oid AS INT)"
+        "ORDER BY try_cast(nad_oid AS INT) NULLS LAST, nad_oid"
     ).fetchall()
     return rows
 
@@ -126,6 +126,18 @@ def test_dedup_keeps_best_nearby_copy(tmp_path):
         ("6", None, []),
         ("7", "inactive_lifecycle", []),
         ("8", None, []),
+    ]
+
+
+def test_dedup_prefers_nad_over_an_extra_source_copy(tmp_path):
+    # Extra sources carry text ids ("ca-fresno-county:12"); NAD's numeric ids win a tie.
+    src = write_points(tmp_path / "filled", [
+        row("ca-fresno-county:12", lat=40.0001),
+        row(5),
+    ])
+    out = dedup_dir(src, tmp_path / "addresses")
+    assert sorted(read_points(out, "nad_oid, drop_reason")) == [
+        ("5", None), ("ca-fresno-county:12", "duplicate"),
     ]
 
 

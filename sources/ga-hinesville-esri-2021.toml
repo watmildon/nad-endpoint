@@ -1,0 +1,29 @@
+state = "GA"
+name = "City of Hinesville, GA Addresses (Esri Community Maps snapshot, 2021)"
+publisher = "City of Hinesville via Esri Community Maps Contributors"
+notes = "No OSM wiki page of its own; the waiver is in the item licence text, published in Esri's OpenStreetMap curated-data group."
+
+[access]
+protocol = "arcgis"
+url = "https://services6.arcgis.com/Do88DoK2xjTUCXd1/arcgis/rest/services/Hinesville_GA_Addresses/FeatureServer/0"
+page = "https://www.arcgis.com/home/item.html?id=e28584a6611d4c759e1427324472d223"
+refresh = "static snapshot (data edited 2021-06-10)"
+
+[licence]
+name = "CC BY 4.0 with Esri's waiver for OpenStreetMap"
+class = "osm-waiver"
+source = "ArcGIS Online item e28584a6611d4c759e1427324472d223, licenseInfo field (same Esri Community Maps text as the Chester and Forsyth items)"
+quote = "Esri waives Section 2(a)(5)(B) of the CC BY 4.0 license as to OpenStreetMap and its users"
+verified = 2026-10-07
+osm_clearance = "item-licence"
+osm_clearance_url = "https://www.arcgis.com/home/item.html?id=e28584a6611d4c759e1427324472d223"
+
+[fields]
+id = "OBJECTID"
+Add_Number = "addr_housenumber"
+St_Name = "addr_street"
+Unit = "addr_unit"
+Post_City = "addr_city"
+Zip_Code = "addr_postcode"
+Longitude = "_lon"
+Latitude = "_lat"

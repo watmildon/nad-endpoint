@@ -52,7 +52,7 @@ def _verdict_sql(key: str, rows: str) -> str:
             WINDOW
                 address AS (PARTITION BY {key}),
                 best AS (address ORDER BY {PLACEMENT_RANK}, date_update DESC NULLS LAST,
-                                          CAST(nad_oid AS BIGINT))
+                                          try_cast(nad_oid AS BIGINT) NULLS LAST, nad_oid)
         ), measured AS (
             SELECT nad_oid, address_id, position,
                    111320 * sqrt(pow(lat - best_lat, 2)

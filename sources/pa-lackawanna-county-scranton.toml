@@ -1,0 +1,31 @@
+state = "PA"
+name = "Lackawanna County 911 addresses (City of Scranton GIS re-host, 2017)"
+publisher = "City of Scranton GIS"
+notes = "Despite the service name, layer 0 is the 911 address point layer. City is the municipality, so it is mapped to Inc_Muni. 436 rows have no ZIP."
+
+[access]
+protocol = "arcgis"
+url = "https://services7.arcgis.com/c8axx5qqzVWAC8iN/ArcGIS/rest/services/road_centerline/FeatureServer/0"
+page = "https://scranton-open-data-scrantonplanning.hub.arcgis.com/datasets/6eb6dbd15aef44a0a2c2b388d893f906/about"
+refresh = "static (data edited 2017-08-31)"
+
+[licence]
+name = "ODC Public Domain Dedication and License (PDDL) 1.0"
+class = "pddl"
+source = "ArcGIS Online item b9519d5572f64b29881e0cb0ea213326, licenseInfo field"
+quote = "PDDL | This item is meant for public access and use."
+verified = 2026-10-07
+osm_clearance = "licence"
+
+[fields]
+id = "FID"
+Add_Number = "HouseNum"
+St_PreDir = "Prefix"
+St_Name = "Street"
+St_PosTyp = "Suffix"
+St_PosDir = "PostDir"
+Unit = "AptSuite"
+Inc_Muni = "City"
+Zip_Code = "Zip"
+Longitude = "_lon"
+Latitude = "_lat"

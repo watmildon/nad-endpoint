@@ -1,0 +1,31 @@
+state = "CA"
+name = "Addresses in the City of Los Angeles"
+publisher = "City of Los Angeles, Bureau of Engineering"
+notes = "No city column: the postal city is filled later from the ZIP polygon. Street type and directionals are USPS abbreviations, expanded by the street rules. Overlaps LA County's CAMS layer, which is not used."
+
+[access]
+protocol = "socrata"
+url = "https://data.lacity.org/api/views/4ca8-mxuh/rows.csv?accessType=DOWNLOAD"
+page = "https://data.lacity.org/City-Infrastructure-Service-Requests/Addresses-in-the-City-of-Los-Angeles/4ca8-mxuh"
+refresh = "daily"
+
+[licence]
+name = "CC0 1.0"
+class = "cc0"
+source = "Socrata dataset metadata, https://data.lacity.org/api/views/4ca8-mxuh.json (license.name, licenseId CC0_10)"
+quote = "Creative Commons 1.0 Universal (Public Domain Dedication)"
+verified = 2026-10-07
+osm_clearance = "licence"
+
+[fields]
+id = "hse_id"
+Add_Number = "hse_nbr"
+AddNum_Suf = "hse_frac_nbr"
+St_PreDir = "hse_dir_cd"
+St_Name = "str_nm"
+St_PosTyp = "str_sfx_cd"
+St_PosDir = "str_sfx_dir_cd"
+Unit = "unit_range"
+Zip_Code = "zip_cd"
+Longitude = "lon"
+Latitude = "lat"

@@ -90,16 +90,20 @@ def _build_lookup(con, rule: str, cols: list[str], fn, scratch: Path):
 
 def transform(release: str) -> Path:
     rel = config.release_dir(release)
-    return transform_dir(rel / "raw", rel / "osm", load_place_names())
+    extra = rel / "raw_extra"
+    return transform_dir(rel / "raw", rel / "osm", load_place_names(),
+                         extra_dir=extra if extra.exists() else None)
 
 
-def transform_dir(raw_dir: Path, out_dir: Path, names: PlaceNames) -> Path:
+def transform_dir(raw_dir: Path, out_dir: Path, names: PlaceNames,
+                  extra_dir: Path | None = None) -> Path:
     con = duckdb.connect()
     con.execute("SET preserve_insertion_order = false")
     con.execute(
         f"""
         CREATE VIEW nad AS
-        SELECT * FROM read_parquet('{raw_glob(raw_dir)}', hive_partitioning = false)
+        SELECT * FROM read_parquet({_globs(raw_dir, extra_dir)}, hive_partitioning = false,
+                                   union_by_name = true)
         """
     )
     joins = []
@@ -146,6 +150,12 @@ def transform_dir(raw_dir: Path, out_dir: Path, names: PlaceNames) -> Path:
         """
     )
     return out_dir
+
+
+def _globs(raw_dir: Path, extra_dir: Path | None) -> str:
+    """A DuckDB list literal of the raw globs: NAD's rows plus any extra sources."""
+    globs = [raw_glob(raw_dir)] + ([raw_glob(extra_dir)] if extra_dir else [])
+    return "[" + ", ".join(f"'{g}'" for g in globs) + "]"
 
 
 def osm_glob(out_dir: Path) -> str:

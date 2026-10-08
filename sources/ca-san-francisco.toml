@@ -1,0 +1,30 @@
+state = "CA"
+name = "San Francisco Addresses with Units (Enterprise Addressing System)"
+publisher = "City and County of San Francisco"
+notes = "The Socrata CSV export carries display names, which the field mapping uses. No city column; every row is San Francisco and the ZIP polygon backfill fills the postal city. Street names are already spelled out. Used by the 2020 OSM San Francisco address import."
+
+[access]
+protocol = "socrata"
+url = "https://data.sfgov.org/api/views/ramy-di5m/rows.csv?accessType=DOWNLOAD&api_foundry=true"
+page = "https://data.sfgov.org/Geographic-Locations-and-Boundaries/Addresses-with-Units-Enterprise-Addressing-System/ramy-di5m"
+refresh = "nightly"
+
+[licence]
+name = "ODC Public Domain Dedication and License (PDDL) 1.0"
+class = "pddl"
+source = "Socrata dataset metadata, https://data.sf.gov/api/views/ramy-di5m.json (license.name, licenseId PDDL)"
+quote = "Open Data Commons Public Domain Dedication and License"
+verified = 2026-10-07
+osm_clearance = "licence"
+osm_clearance_url = "https://wiki.openstreetmap.org/wiki/San_Francisco_Address_Import"
+
+[fields]
+id = "EAS FullID"
+Add_Number = "Address Number"
+AddNum_Suf = "Address Number Suffix"
+St_Name = "Street Name"
+St_PosTyp = "Street Type"
+Unit = "Unit Number"
+Zip_Code = "ZIP Code"
+Longitude = "Longitude"
+Latitude = "Latitude"

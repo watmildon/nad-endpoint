@@ -1,0 +1,28 @@
+state = "LA"
+name = "New Orleans Site Address Point"
+publisher = "City of New Orleans"
+notes = "The lat/long columns hold Louisiana state-plane coordinates (EPSG:3452), so the position is taken from the WGS84 point in the_geom. Full street name goes through the street rules as St_Name. No ZIP column; the ZIP polygon backfill fills it. NAD already carries 159K Orleans Parish rows from the communication district, so dedup will collapse the overlap; this source adds roughly 110K."
+
+[access]
+protocol = "socrata"
+url = "https://data.nola.gov/api/v3/views/hfvu-md72/query.csv"
+page = "https://data.nola.gov/Public-Safety-and-Preparedness/Site-Address-Point/hfvu-md72"
+refresh = "live (rows updated 2026-08-21 at verification)"
+
+[licence]
+name = "CC0 1.0"
+class = "cc0"
+source = "Socrata dataset metadata, https://data.nola.gov/api/views/hfvu-md72.json (license.name, licenseId CC0_10)"
+quote = "Creative Commons 1.0 Universal (Public Domain Dedication)"
+verified = 2026-10-07
+osm_clearance = "licence"
+
+[fields]
+id = "siteaddid"
+AddNum_Pre = "preaddrnum"
+Add_Number = "addrnum"
+AddNum_Suf = "addrnumsuf"
+St_Name = "fullname"
+Unit = ["unittype", "unitid"]
+Inc_Muni = "placename"
+Point_WKT = "the_geom"

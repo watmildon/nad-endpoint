@@ -1,0 +1,33 @@
+state = "CA"
+name = "San Diego County address points (SanGIS / SANDAG regional data)"
+publisher = "SanGIS (San Diego Geographic Information Source), hosted by SANDAG"
+notes = "The SanGIS agreement forbids redistributing the unmodified data as an original SanGIS product; our output is a transformation. The wiki permission names SanGIS and the city and county but gives no date or document; worth asking SanGIS to confirm it still stands. `community` is the planning community, not always the postal city."
+
+[access]
+protocol = "arcgis"
+url = "https://geo.sandag.org/server/rest/services/Hosted/Address_Points/FeatureServer/0"
+page = "https://geo.sandag.org/portal/home/item.html?id=b1c2fd749f6847ccae6040cf0f803647"
+refresh = "live"
+
+[licence]
+name = "SanGIS end-user agreement (redistribution allowed, attribution requested) with explicit OSM permission"
+class = "osm-permission"
+source = "OSM wiki Import/San_Diego_County,_California_Addresses (permission statement); SanGIS end-user agreement at https://www.sangis.org/download/ (terms)"
+quote = "ODbL Compliance: Yes, explicit permission to integrate data with OpenStreetMap given by SanGIS and representatives from City and County of San Diego."
+verified = 2026-10-07
+osm_clearance = "wiki"
+osm_clearance_url = "https://wiki.openstreetmap.org/wiki/Import/San_Diego_County,_California_Addresses"
+
+[fields]
+id = "addrapnid"
+Add_Number = "addrnmbr"
+AddNum_Suf = "addrfrac"
+St_PreDir = "addrpdir"
+St_Name = "addrname"
+St_PosTyp = "addrsfx"
+St_PosDir = "addrpostd"
+Unit = "addrunit"
+Post_City = "community"
+Zip_Code = "addrzip"
+Longitude = "_lon"
+Latitude = "_lat"

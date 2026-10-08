@@ -1,0 +1,29 @@
+state = "PA"
+name = "Chester County, PA Addresses (Esri Community Maps snapshot, February 2021)"
+publisher = "Chester County via Esri Community Maps Contributors"
+notes = "Already OSM-tagged by Esri; the full street name goes through our street rules as St_Name, which leaves spelled-out names alone. The county's own current layer is restricted, so this 2021 snapshot is what is usable."
+
+[access]
+protocol = "arcgis"
+url = "https://services6.arcgis.com/Do88DoK2xjTUCXd1/arcgis/rest/services/Chester_County_PA_Addresses/FeatureServer/0"
+page = "https://www.arcgis.com/home/item.html?id=eafffc5ac75e47a1a29716341ffa5f26"
+refresh = "static snapshot (data edited 2021-06-10)"
+
+[licence]
+name = "CC BY 4.0 with Esri's waiver for OpenStreetMap"
+class = "osm-waiver"
+source = "ArcGIS Online item eafffc5ac75e47a1a29716341ffa5f26, licenseInfo field; OSM wiki Import/Chester_County,_Pennsylvania_Addresses"
+quote = "Esri waives Section 2(a)(5)(B) of the CC BY 4.0 license as to OpenStreetMap and its users"
+verified = 2026-10-07
+osm_clearance = "wiki"
+osm_clearance_url = "https://wiki.openstreetmap.org/wiki/Import/Chester_County,_Pennsylvania_Addresses"
+
+[fields]
+id = "OBJECTID"
+Add_Number = "addr_housenumber"
+St_Name = "addr_street"
+Unit = "addr_unit"
+Post_City = "addr_city"
+Zip_Code = "addr_postcode"
+Longitude = "_lon"
+Latitude = "_lat"

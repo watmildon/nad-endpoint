@@ -29,6 +29,7 @@ BOUNDARIES = {
     "place": "https://www2.census.gov/geo/tiger/GENZ2023/shp/cb_2023_us_place_500k.zip",
     "cousub": "https://www2.census.gov/geo/tiger/GENZ2023/shp/cb_2023_us_cousub_500k.zip",
     "zcta": "https://www2.census.gov/geo/tiger/GENZ2020/shp/cb_2020_us_zcta520_500k.zip",
+    "county": "https://www2.census.gov/geo/tiger/GENZ2023/shp/cb_2023_us_county_500k.zip",
 }
 WIKIDATA_FILE = "wikidata_fips_places.csv"
 # English labels of every item with a FIPS 55-3 place code (state FIPS + place code).

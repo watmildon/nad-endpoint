@@ -75,6 +75,10 @@ def test_smart_title(text, expected):
     (dict(name="CARIBBEAN DR W", post_type="Drive", post_dir="West"), "Caribbean Drive West"),
     (dict(name="US 64 HWY E", post_type="Highway", post_dir="East"), "US 64 Highway East"),
     (dict(name="RUSSWOOD LN W", post_type="Lane", post_dir="West"), "Russwood Lane West"),
+    # Extra sources deliver abbreviated field values where NAD spells them out.
+    (dict(name="MAIN", post_type="ST", pre_dir="N"), "North Main Street"),
+    (dict(name="OAK", post_type="AVE", post_dir="SW"), "Oak Avenue Southwest"),
+    (dict(name="5", pre_type="county road"), "County Road 5"),
     # Lettered streets are not directionals.
     (dict(name="E", post_type="Street"), "E Street"),
     (dict(name="E ST"), "E Street"),
