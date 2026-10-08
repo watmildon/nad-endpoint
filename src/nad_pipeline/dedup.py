@@ -26,8 +26,12 @@ PLACEMENT_RANK = """
          WHEN placement = 'Linear Geocode' THEN 5
          ELSE 4 END
 """
-ADDRESS_KEY = """
-    addr_state, county, lower(addr_housenumber), lower(addr_street),
+# NAD writes "Orleans Parish" and "Anchorage Municipality" where Census (used for the
+# extra sources) writes "Orleans" and "Anchorage"; the key ignores the descriptor.
+COUNTY_KEY = """regexp_replace(lower(coalesce(county, '')),
+    ' (county|parish|borough|census area|municipality|city and borough|city)$', '')"""
+ADDRESS_KEY = f"""
+    addr_state, {COUNTY_KEY}, lower(addr_housenumber), lower(addr_street),
     lower(coalesce(addr_unit, ''))
 """
 ADDRESS_AND_CITY_KEY = ADDRESS_KEY + ", lower(coalesce(addr_city, ''))"
