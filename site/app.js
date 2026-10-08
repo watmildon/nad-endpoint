@@ -231,7 +231,11 @@ async function loadCoverage() {
   }
   map.getSource("coverage").setData(data);
   coverage.sources = data.sources || {};
-  for (const f of data.features) coverage.byGeoid.set(f.properties.geoid, f.properties);
+  for (const f of data.features) {
+    const b = emptyBounds();
+    eachCoordinate(f.geometry, ([x, y]) => extend(b, x, y));
+    coverage.byGeoid.set(f.properties.geoid, { ...f.properties, bounds: lngLatBounds(b) });
+  }
 
   renderStates(data);
   renderSources(data.release, coverage.sources);
@@ -298,7 +302,7 @@ function eachCoordinate(geometry, fn) {
   for (const polygon of polygons) for (const point of polygon[0]) fn(point);
 }
 
-// Bounds kept separately for each hemisphere so a state across the antimeridian (Alaska's
+// Bounds kept separately for each hemisphere so an area across the antimeridian (Alaska's
 // Aleutians) can be framed from its west end rather than spanning the whole globe.
 function emptyBounds() {
   return { west: [Infinity, -Infinity], east: [Infinity, -Infinity], south: Infinity, north: -Infinity };
@@ -312,18 +316,30 @@ function extend(b, x, y) {
   b.north = Math.max(b.north, y);
 }
 
-function flyToState(s) {
-  const hasWest = s.west[0] <= s.west[1];
-  const hasEast = s.east[0] <= s.east[1];
+function lngLatBounds(b) {
+  const hasWest = b.west[0] <= b.west[1];
+  const hasEast = b.east[0] <= b.east[1];
   let w, e;
-  if (hasWest && hasEast && s.west[1] < -100 && s.east[0] > 100) {
-    [w, e] = [s.east[0] - 360, s.west[1]];
+  if (hasWest && hasEast && b.west[1] < -100 && b.east[0] > 100) {
+    [w, e] = [b.east[0] - 360, b.west[1]];
   } else {
-    w = Math.min(hasWest ? s.west[0] : Infinity, hasEast ? s.east[0] : Infinity);
-    e = Math.max(hasWest ? s.west[1] : -Infinity, hasEast ? s.east[1] : -Infinity);
+    w = Math.min(hasWest ? b.west[0] : Infinity, hasEast ? b.east[0] : Infinity);
+    e = Math.max(hasWest ? b.west[1] : -Infinity, hasEast ? b.east[1] : -Infinity);
   }
+  return [[w, b.south], [e, b.north]];
+}
+
+function flyToState(s) {
   if (narrow) setCollapsed(true);
-  map.fitBounds([[w, s.south], [e, s.north]], { padding: sidePadding(), maxZoom: 11 });
+  map.fitBounds(lngLatBounds(s), { padding: sidePadding(), maxZoom: 11 });
+}
+
+// Small counties come in past zoom 10, where the address points start.
+function flyToCounty(geoid) {
+  const county = coverage.byGeoid.get(geoid);
+  if (!county) return;
+  if (narrow) setCollapsed(true);
+  map.fitBounds(county.bounds, { padding: sidePadding(), maxZoom: 15 });
 }
 
 // ---- interaction -------------------------------------------------------------------------
@@ -367,8 +383,13 @@ function box(p, r) {
 function popup(lngLat, html) {
   const p = new maplibregl.Popup({ maxWidth: "320px" }).setLngLat(lngLat).setHTML(html).addTo(map);
   p.getElement().addEventListener("click", (e) => {
-    const button = e.target.closest("button.copy");
-    if (button) copyTags(button);
+    const copy = e.target.closest("button.copy");
+    if (copy) copyTags(copy);
+    const zoom = e.target.closest("button.zoom");
+    if (zoom) {
+      p.remove();
+      flyToCounty(zoom.dataset.geoid);
+    }
   });
 }
 
@@ -401,6 +422,11 @@ async function copyTags(button) {
     button.setAttribute("aria-label", "Copy tags");
   }, 1500);
 }
+
+const ZOOM_ICON = `<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+  <circle cx="7" cy="7" r="4.5" fill="none" stroke="currentColor" stroke-width="1.4"/>
+  <path d="M10.3 10.3L14 14M7 5v4M5 7h4" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+</svg>`;
 
 // Two overlapping squares, and the check mark shown briefly after a copy.
 const COPY_ICON = `<svg class="icon-copy" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
@@ -462,7 +488,8 @@ function countyHtml(p) {
       <span style="width:${nadShare}%;background:${COLORS.nad}"></span>
       <span style="width:${100 - nadShare}%;background:${COLORS.other}"></span>
     </div>
-    <div class="sub">NAD ${fmt.format(p.nad)} · other sources ${fmt.format(p.other)}</div>
+    <div class="sub">NAD ${fmt.format(p.nad)} · non-NAD ${fmt.format(p.other)}</div>
     <ul>${list}</ul>${more}
+    <button type="button" class="zoom" data-geoid="${esc(p.geoid)}">${ZOOM_ICON}Zoom to county</button>
   </div>`;
 }

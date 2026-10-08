@@ -70,6 +70,14 @@ def test_only_extra_sources_is_other(tmp_path, counties):
     assert by_geoid["18001"]["origin"] == "other"
 
 
+def test_a_few_leaked_points_do_not_make_a_county_mixed(tmp_path, counties):
+    rows = [("in-test-city", -86.5, 40.5, None)] * 40 + [("State of Indiana", -86.5, 40.5, None)]
+    rows += [("State of Indiana", -85.5, 40.5, None)] * 40 + [("in-test-city", -85.5, 40.5, None)]
+    _, by_geoid = build(tmp_path, counties, rows)
+    assert (by_geoid["18001"]["origin"], by_geoid["18001"]["nad"]) == ("other", 1)
+    assert (by_geoid["18003"]["origin"], by_geoid["18003"]["other"]) == ("nad", 1)
+
+
 def test_points_just_outside_every_county_snap_to_the_nearest(tmp_path, counties):
     data, by_geoid = build(tmp_path, counties, [
         ("State of Indiana", -86.5, 40.5, None),

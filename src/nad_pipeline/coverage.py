@@ -27,6 +27,9 @@ GRID = 100          # bins per degree
 SNAP = 0.05         # degrees; how far a bin outside every county may be snapped
 SIMPLIFY = 0.01     # degrees; coverage simplification tolerance
 PRECISION = 0.0001  # degrees; output coordinate grid (~10 m)
+# A county is "mixed" only when NAD and the other sources each supply at least this share of
+# its points; a handful of points leaking over a county line does not make it mixed.
+MIXED_SHARE = 0.05
 
 
 def coverage_path(release: str) -> Path:
@@ -114,6 +117,15 @@ def write_coverage(addresses_dir: Path, counties: Path, extra: list[Source], rel
     return _write(out, release, counts, shapes, extra, unassigned)
 
 
+def _origin(nad: int, other: int) -> str:
+    total = nad + other
+    if other < MIXED_SHARE * total:
+        return "nad"
+    if nad < MIXED_SHARE * total:
+        return "other"
+    return "mixed"
+
+
 def _write(out: Path, release: str, counts, shapes, extra: list[Source], unassigned: int) -> Path:
     extra_by_id = {s.id: s for s in extra}
     by_county: dict[int, list[tuple[str, int]]] = {}
@@ -133,7 +145,7 @@ def _write(out: Path, release: str, counts, shapes, extra: list[Source], unassig
             "properties": {
                 "geoid": geoid, "name": name, "state": state, "points": total,
                 "nad": nad, "other": other,
-                "origin": "mixed" if nad and other else "other" if other else "nad",
+                "origin": _origin(nad, other),
                 "sources": [{"id": s, "points": p} for s, p in rows],
             },
             "geometry": geometry,

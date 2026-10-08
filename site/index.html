@@ -34,12 +34,13 @@
         Address points from the USDOT National Address Database, plus select openly licensed
         local sources, tidied for OpenStreetMap.
       </p>
+      <p class="intro">Zoom in to view individual addresses.</p>
 
       <section class="legend" aria-label="Legend">
         <ul>
-          <li><span class="swatch" style="--c: var(--nad)"></span>Points from NAD only</li>
-          <li><span class="swatch" style="--c: var(--mixed)"></span>NAD and other sources</li>
-          <li><span class="swatch" style="--c: var(--other)"></span>Other sources only</li>
+          <li><span class="swatch" style="--c: var(--nad)"></span>Points from NAD</li>
+          <li><span class="swatch" style="--c: var(--mixed)"></span>Mixed sources</li>
+          <li><span class="swatch" style="--c: var(--other)"></span>Non-NAD sources</li>
           <li><span class="swatch sparse" style="--c: var(--muted)"></span>Fewer than 100 points</li>
           <li><span class="dot"></span>Address point (zoom 10+)</li>
         </ul>
@@ -49,7 +50,7 @@
         <summary><h2>Coverage by state</h2></summary>
         <p id="coverage-status" class="note">Loading coverage…</p>
         <table id="states" class="states" hidden>
-          <thead><tr><th scope="col">State</th><th scope="col" class="num">Points</th><th scope="col" class="num" title="Share of points from sources other than NAD">Other</th></tr></thead>
+          <thead><tr><th scope="col">State</th><th scope="col" class="num">Points</th><th scope="col" class="num" title="Share of points from non-NAD sources">Non-NAD</th></tr></thead>
           <tbody></tbody>
         </table>
         <p id="no-data" class="note" hidden></p>
