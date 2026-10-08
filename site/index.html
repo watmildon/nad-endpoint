@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>NAD Address Viewer</title>
-  <meta name="description" content="Browse the National Address Database address points cleaned for OpenStreetMap, and see which areas they cover and where each county's points come from.">
+  <title>NAD+</title>
+  <meta name="description" content="Browse NAD+: National Address Database address points, plus select openly licensed local sources, tidied for OpenStreetMap. See which areas they cover and where each county's points come from.">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@5.24.0/dist/maplibre-gl.css"
         integrity="sha384-uTttxo/aOKbdE5RlD/SPzSDoDmNvGlUYPjONi2MN/b7c9HPSvW07OIuyP7uL6jxK" crossorigin="anonymous">
   <link rel="stylesheet" href="style.css">
@@ -20,8 +20,8 @@
   <aside id="panel" class="panel">
     <header class="panel-head">
       <div>
-        <h1>NAD address points</h1>
-        <p id="meta" class="meta">Loading release…</p>
+        <h1>NAD+</h1>
+        <p id="meta" class="meta">Loading…</p>
       </div>
       <button id="toggle" class="toggle" type="button" aria-expanded="true" aria-controls="panel-body"
               aria-label="Hide panel">
@@ -31,13 +31,11 @@
 
     <div id="panel-body" class="panel-body">
       <p class="intro">
-        Address points from the USDOT National Address Database, cleaned for OpenStreetMap,
-        plus a few extra openly licensed local sources. Zoom in to see the points; click a
-        point or a county for details.
+        Address points from the USDOT National Address Database, plus select openly licensed
+        local sources, tidied for OpenStreetMap.
       </p>
 
       <section class="legend" aria-label="Legend">
-        <p id="zoom-status" class="zoom-status"></p>
         <ul>
           <li><span class="swatch" style="--c: var(--nad)"></span>Points from NAD only</li>
           <li><span class="swatch" style="--c: var(--mixed)"></span>NAD and other sources</li>
@@ -45,29 +43,24 @@
           <li><span class="swatch sparse" style="--c: var(--muted)"></span>Fewer than 100 points</li>
           <li><span class="dot"></span>Address point (zoom 10+)</li>
         </ul>
-        <p class="note">A county is shaded when it holds at least 100 points, so one town's
-          addresses shade the whole county the same as complete coverage would. Click a county
-          to see its counts.</p>
       </section>
 
-      <section>
-        <h2>Coverage by state</h2>
+      <details class="fold" open>
+        <summary><h2>Coverage by state</h2></summary>
         <p id="coverage-status" class="note">Loading coverage…</p>
         <table id="states" class="states" hidden>
           <thead><tr><th scope="col">State</th><th scope="col" class="num">Points</th><th scope="col" class="num" title="Share of points from sources other than NAD">Other</th></tr></thead>
           <tbody></tbody>
         </table>
         <p id="no-data" class="note" hidden></p>
-      </section>
+      </details>
 
-      <section id="extra-section" hidden>
-        <h2>Other sources</h2>
-        <ul id="extra" class="sources"></ul>
-      </section>
+      <details id="sources-section" class="fold" hidden>
+        <summary><h2>Sources</h2></summary>
+        <ul id="sources" class="sources"></ul>
+      </details>
 
       <footer class="foot">
-        <p>Tiles: <a id="tiles-link" href="#">nad-current.pmtiles</a> ·
-          coverage: <a id="coverage-link" href="#">GeoJSON</a></p>
         <p>NAD data is public domain (US DOT). Other sources are CC0, public domain or carry an
           OpenStreetMap waiver; see each source.</p>
       </footer>

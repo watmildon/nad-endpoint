@@ -1,4 +1,4 @@
-// NAD address viewer: the published PMTiles for zoom 10+ and a county coverage overlay below.
+// NAD+ viewer: the published PMTiles for zoom 10+ and a county coverage overlay below.
 // ?data=<base url> points the page at another copy of the files (e.g. a local test server).
 
 const params = new URLSearchParams(location.search);
@@ -70,9 +70,6 @@ toggle.addEventListener("click", () => setCollapsed(!panel.classList.contains("c
 const narrow = matchMedia("(max-width: 640px)").matches;
 if (narrow) setCollapsed(true);
 
-$("tiles-link").href = TILES;
-$("coverage-link").href = COVERAGE;
-
 // ---- map ---------------------------------------------------------------------------------
 
 const protocol = new pmtiles.Protocol({ metadata: true });
@@ -85,10 +82,28 @@ const map = new maplibregl.Map({
   bounds: [[-125, 24.5], [-66.9, 49.4]],
   fitBoundsOptions: { padding: sidePadding() },
   hash: "map",
-  attributionControl: { compact: true },
+  attributionControl: false,
 });
 map.addControl(new maplibregl.NavigationControl({ visualizePitch: false }), "top-right");
-map.addControl(new maplibregl.ScaleControl({ unit: "imperial" }), "bottom-right");
+
+// The info box and scale bar in the lower right, rebuilt once the sidecar says when the data
+// was built. One string, because MapLibre reorders separate attribution entries by length;
+// the scale bar is re-added after the info box so it stays above it.
+let attribution = null;
+let scale = null;
+
+function setAttribution(built) {
+  const github = '<a href="https://github.com/watmildon/nad-endpoint">NAD+ on GitHub</a>';
+  const text = built ? `${github} · data built ${esc(built)}` : github;
+  if (attribution) map.removeControl(attribution);
+  if (scale) map.removeControl(scale);
+  attribution = new maplibregl.AttributionControl({ compact: true, customAttribution: text });
+  scale = new maplibregl.ScaleControl({ unit: "imperial" });
+  map.addControl(attribution);
+  map.addControl(scale, "bottom-right");
+}
+
+setAttribution();
 
 function sidePadding() {
   return narrow ? { top: 40, bottom: 80, left: 20, right: 20 }
@@ -187,20 +202,7 @@ map.on("load", () => {
 
   loadCoverage();
   loadSidecar();
-  updateZoomStatus();
 });
-
-map.on("zoomend", updateZoomStatus);
-
-function updateZoomStatus() {
-  const z = map.getZoom();
-  const shown = z < POINT_ZOOM
-    ? `Zoom ${z.toFixed(1)}: showing county coverage. Zoom to ${POINT_ZOOM} for address points.`
-    : z < FULL_ZOOM
-      ? `Zoom ${z.toFixed(1)}: points are thinned for display. Zoom to ${FULL_ZOOM} to see every point.`
-      : `Zoom ${z.toFixed(1)}: every address point is shown.`;
-  $("zoom-status").textContent = shown;
-}
 
 // ---- data --------------------------------------------------------------------------------
 
@@ -209,10 +211,10 @@ async function loadSidecar() {
     const res = await fetch(SIDECAR);
     if (!res.ok) throw new Error(res.status);
     const meta = await res.json();
-    $("meta").textContent =
-      `Release ${meta.release} · built ${meta.built} · ${fmt.format(meta.points)} points`;
+    $("meta").textContent = `${fmt.format(meta.points)} address points`;
+    setAttribution(meta.built);
   } catch {
-    $("meta").textContent = "Release information unavailable";
+    $("meta").textContent = "Point count unavailable";
   }
 }
 
@@ -232,12 +234,8 @@ async function loadCoverage() {
   for (const f of data.features) coverage.byGeoid.set(f.properties.geoid, f.properties);
 
   renderStates(data);
-  renderExtraSources(coverage.sources);
-  const note = data.unassigned
-    ? ` ${fmt.format(data.unassigned)} points fall outside every county and are not shown here.`
-    : "";
-  $("coverage-status").textContent =
-    `${data.features.length} counties hold points in release ${data.release}. Click a state to zoom to it.${note}`;
+  renderSources(data.release, coverage.sources);
+  $("coverage-status").textContent = `${fmt.format(data.features.length)} counties hold points.`;
 }
 
 function renderStates(data) {
@@ -275,16 +273,24 @@ function renderStates(data) {
   }
 }
 
-function renderExtraSources(sources) {
-  const extra = Object.entries(sources).filter(([, s]) => s.kind === "other");
-  if (!extra.length) return;
-  extra.sort(([, a], [, b]) => (a.state + a.name).localeCompare(b.state + b.name));
-  $("extra").innerHTML = extra.map(([, s]) => {
-    const url = safeUrl(s.page);
-    const name = url ? `<a href="${esc(url)}" target="_blank" rel="noopener">${esc(s.name)}</a>` : esc(s.name);
-    return `<li>${name}<span class="sub">${esc(s.publisher)} · ${esc(s.licence)} · ${fmt.format(s.points)} points</span></li>`;
-  }).join("");
-  $("extra-section").hidden = false;
+const NAD_PAGE = "https://www.transportation.gov/gis/national-address-database";
+
+function renderSources(release, sources) {
+  const all = Object.values(sources);
+  const nadPoints = all.filter((s) => s.kind === "nad").reduce((sum, s) => sum + s.points, 0);
+  const extra = all.filter((s) => s.kind === "other");
+  extra.sort((a, b) => (a.state + a.name).localeCompare(b.state + b.name));
+  const item = (name, url, sub) => {
+    const link = url ? `<a href="${esc(url)}" target="_blank" rel="noopener">${esc(name)}</a>` : esc(name);
+    return `<li>${link}<span class="sub">${sub}</span></li>`;
+  };
+  $("sources").innerHTML = [
+    item("National Address Database", NAD_PAGE,
+      `US Department of Transportation · release ${esc(release)} · public domain · ${fmt.format(nadPoints)} points`),
+    ...extra.map((s) => item(s.name, safeUrl(s.page),
+      `${esc(s.publisher)} · ${esc(s.licence)} · ${fmt.format(s.points)} points`)),
+  ].join("");
+  $("sources-section").hidden = false;
 }
 
 function eachCoordinate(geometry, fn) {

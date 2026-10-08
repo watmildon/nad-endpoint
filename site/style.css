@@ -69,6 +69,31 @@ a { color: var(--link); }
 h1 { font-size: 17px; margin: 0; }
 h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); margin: 18px 0 6px; }
 
+.fold summary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 18px 0 6px;
+  cursor: pointer;
+  list-style: none;
+  border-radius: 4px;
+}
+.fold summary::-webkit-details-marker { display: none; }
+.fold summary h2 { margin: 0; }
+.fold summary::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  margin: 0 2px;
+  border-right: 1.5px solid var(--muted);
+  border-bottom: 1.5px solid var(--muted);
+  transform: rotate(-45deg);
+  transition: transform 0.15s;
+}
+.fold[open] summary::before { transform: rotate(45deg); }
+.fold summary:hover h2 { color: var(--fg); }
+.fold summary:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
+
 .meta { margin: 2px 0 0; color: var(--muted); font-size: 12.5px; }
 
 .toggle {
@@ -102,14 +127,6 @@ h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.04em; color: 
 }
 .swatch.sparse { background: none; border-style: dashed; }
 .dot { width: 8px; height: 8px; margin: 0 4px; border-radius: 50%; background: var(--point); }
-
-.zoom-status {
-  margin: 0 0 8px;
-  padding: 6px 8px;
-  border-radius: 6px;
-  background: var(--hover);
-  font-size: 12.5px;
-}
 
 .note { color: var(--muted); font-size: 12.5px; margin: 8px 0 0; }
 
