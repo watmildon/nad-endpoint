@@ -365,8 +365,51 @@ function box(p, r) {
 }
 
 function popup(lngLat, html) {
-  new maplibregl.Popup({ maxWidth: "320px" }).setLngLat(lngLat).setHTML(html).addTo(map);
+  const p = new maplibregl.Popup({ maxWidth: "320px" }).setLngLat(lngLat).setHTML(html).addTo(map);
+  p.getElement().addEventListener("click", (e) => {
+    const button = e.target.closest("button.copy");
+    if (button) copyTags(button);
+  });
 }
+
+// Tags go to the clipboard as key=value lines, which JOSM's tag paste and iD's text view take.
+async function copyTags(button) {
+  const text = button.dataset.tags;
+  let ok = false;
+  try {
+    await navigator.clipboard.writeText(text);
+    ok = true;
+  } catch {
+    // No async clipboard (an insecure origin, an older browser): fall back to a selection.
+    const area = document.createElement("textarea");
+    area.value = text;
+    area.setAttribute("readonly", "");
+    area.style.position = "fixed";
+    area.style.opacity = "0";
+    document.body.append(area);
+    area.select();
+    ok = document.execCommand("copy");
+    area.remove();
+  }
+  const label = ok ? "Copied" : "Copy failed";
+  button.classList.add(ok ? "done" : "failed");
+  button.title = label;
+  button.setAttribute("aria-label", label);
+  setTimeout(() => {
+    button.classList.remove("done", "failed");
+    button.title = "Copy tags";
+    button.setAttribute("aria-label", "Copy tags");
+  }, 1500);
+}
+
+// Two overlapping squares, and the check mark shown briefly after a copy.
+const COPY_ICON = `<svg class="icon-copy" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+  <rect x="5.5" y="5.5" width="8" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.4"/>
+  <path d="M10.5 3.5v-.5a1.5 1.5 0 0 0-1.5-1.5H4A1.5 1.5 0 0 0 2.5 3v5A1.5 1.5 0 0 0 4 9.5h.5" fill="none" stroke="currentColor" stroke-width="1.4"/>
+</svg>`;
+const DONE_ICON = `<svg class="icon-done" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+  <path d="M3.5 8.5l3 3 6-7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>`;
 
 const TAG_ORDER = ["addr:housenumber", "addr:street", "addr:unit", "addr:city", "addr:state", "addr:postcode"];
 
@@ -388,8 +431,12 @@ function addressHtml(features) {
     const line1 = [p["addr:housenumber"], p["addr:street"]].filter(Boolean).join(" ");
     const unit = p["addr:unit"] ? `, ${p["addr:unit"]}` : "";
     const line2 = [p["addr:city"], [p["addr:state"], p["addr:postcode"]].filter(Boolean).join(" ")].filter(Boolean).join(", ");
-    const tags = TAG_ORDER.filter((t) => p[t]).map((t) => `${esc(t)}=${esc(p[t])}`).join("<br>");
-    return `<div class="addr"><h3>${esc(line1)}${esc(unit)}</h3><div class="sub">${esc(line2)}</div><p class="tags">${tags}</p></div>`;
+    const pairs = TAG_ORDER.filter((t) => p[t]).map((t) => `${t}=${p[t]}`);
+    const tags = pairs.map(esc).join("<br>");
+    const copy = `<button type="button" class="copy" title="Copy tags" aria-label="Copy tags"
+      data-tags="${esc(pairs.join("\n"))}">${COPY_ICON}${DONE_ICON}</button>`;
+    return `<div class="addr"><h3>${esc(line1)}${esc(unit)}</h3><div class="sub">${esc(line2)}</div>
+      <div class="tagbox"><p class="tags">${tags}</p>${copy}</div></div>`;
   }).join("");
   const more = rows.length > shown.length ? `<p class="sub">and ${rows.length - shown.length} more here</p>` : "";
   const thin = map.getZoom() < FULL_ZOOM ? `<p class="sub">Points are thinned below zoom ${FULL_ZOOM}; zoom in for all of them.</p>` : "";
