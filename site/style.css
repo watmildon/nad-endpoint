@@ -1,0 +1,173 @@
+:root {
+  --bg: #ffffff;
+  --fg: #1d232b;
+  --muted: #5b6672;
+  --line: #dde2e7;
+  --hover: #f1f4f7;
+  --link: #1f62b5;
+  --nad: #3478d4;
+  --mixed: #8e5cc4;
+  --other: #e2782f;
+  --point: #c2185b;
+  --shadow: 0 2px 12px rgba(16, 24, 32, 0.18);
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1b2027;
+    --fg: #e6eaef;
+    --muted: #9aa5b1;
+    --line: #313944;
+    --hover: #252c35;
+    --link: #7fb2f5;
+    --nad: #5b9bf0;
+    --mixed: #b28ae0;
+    --other: #f2994f;
+    --point: #ff6fa8;
+    --shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+    color-scheme: dark;
+  }
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--fg);
+  font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+#map { position: absolute; inset: 0; }
+
+a { color: var(--link); }
+
+.panel {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  width: 340px;
+  max-height: calc(100% - 24px);
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  z-index: 2;
+}
+
+.panel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 14px 16px 10px;
+}
+
+h1 { font-size: 17px; margin: 0; }
+h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); margin: 18px 0 6px; }
+
+.meta { margin: 2px 0 0; color: var(--muted); font-size: 12.5px; }
+
+.toggle {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--fg);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+.toggle svg { transition: transform 0.15s; }
+.panel.collapsed .toggle svg { transform: rotate(180deg); }
+.panel.collapsed .panel-body { display: none; }
+
+.panel-body { overflow-y: auto; padding: 0 16px 14px; }
+
+.intro { margin: 0 0 10px; }
+
+.legend ul { list-style: none; margin: 0; padding: 0; }
+.legend li { display: flex; align-items: center; gap: 8px; padding: 2px 0; }
+.swatch {
+  width: 16px;
+  height: 12px;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--c) 45%, transparent);
+  border: 1.5px solid var(--c);
+}
+.swatch.sparse { background: none; border-style: dashed; }
+.dot { width: 8px; height: 8px; margin: 0 4px; border-radius: 50%; background: var(--point); }
+
+.zoom-status {
+  margin: 0 0 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: var(--hover);
+  font-size: 12.5px;
+}
+
+.note { color: var(--muted); font-size: 12.5px; margin: 8px 0 0; }
+
+.states { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+.states th { text-align: left; font-weight: 600; color: var(--muted); padding: 4px 6px; border-bottom: 1px solid var(--line); }
+.states td { padding: 3px 6px; border-bottom: 1px solid var(--line); }
+.states .num { text-align: right; }
+.states tbody tr { cursor: pointer; }
+.states tbody tr:hover, .states tbody tr:focus { background: var(--hover); outline: none; }
+.states .share { display: inline-block; min-width: 3ch; }
+
+.sources { list-style: none; margin: 0; padding: 0; }
+.sources li { padding: 6px 0; border-bottom: 1px solid var(--line); }
+.sources .sub { display: block; color: var(--muted); font-size: 12px; }
+
+.foot { margin-top: 16px; color: var(--muted); font-size: 12px; }
+.foot p { margin: 4px 0; }
+
+/* Popups */
+.maplibregl-popup-content {
+  background: var(--bg);
+  color: var(--fg);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  padding: 10px 12px;
+  font: 13px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  max-height: 50vh;
+  overflow-y: auto;
+}
+.maplibregl-popup-close-button { color: var(--muted); font-size: 18px; padding: 0 6px; }
+.maplibregl-popup-anchor-top .maplibregl-popup-tip { border-bottom-color: var(--bg); }
+.maplibregl-popup-anchor-bottom .maplibregl-popup-tip { border-top-color: var(--bg); }
+.maplibregl-popup-anchor-left .maplibregl-popup-tip { border-right-color: var(--bg); }
+.maplibregl-popup-anchor-right .maplibregl-popup-tip { border-left-color: var(--bg); }
+
+.pop h3 { margin: 0 18px 2px 0; font-size: 14px; }
+.pop .sub { color: var(--muted); font-size: 12px; }
+.pop .bar { display: flex; height: 6px; border-radius: 3px; overflow: hidden; margin: 8px 0 4px; background: var(--line); }
+.pop .bar span { display: block; height: 100%; }
+.pop ul { list-style: none; margin: 6px 0 0; padding: 0; }
+.pop li { display: flex; justify-content: space-between; gap: 12px; padding: 2px 0; font-variant-numeric: tabular-nums; }
+.pop li .kind { width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; display: inline-block; }
+.pop .addr + .addr { border-top: 1px solid var(--line); margin-top: 6px; padding-top: 6px; }
+.pop .tags { margin: 4px 0 0; font: 12px/1.4 ui-monospace, Consolas, monospace; color: var(--muted); }
+
+@media (max-width: 640px) {
+  .panel {
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: auto;
+    max-height: 55%;
+    border-radius: 12px 12px 0 0;
+  }
+  .panel-body { padding: 0 16px 16px; }
+  /* The panel is a bottom sheet here, so the chevron points down to close and up to open. */
+  .toggle svg { transform: rotate(180deg); }
+  .panel.collapsed .toggle svg { transform: none; }
+  .maplibregl-ctrl-bottom-right { bottom: 64px; }
+}

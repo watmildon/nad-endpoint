@@ -41,6 +41,19 @@ def test_publish_uploads_then_aliases(release):
     assert all("secret" not in " ".join(c) for c in commands)
 
 
+def test_publish_uploads_coverage_when_built(release, tmp_path):
+    (tmp_path / "r99" / "export" / "nad-r99-coverage.geojson").write_text("{}")
+    calls = []
+    urls = publish.publish(release, run=lambda c, check, env: calls.append(c),
+                           environ=CREDENTIALS)
+    assert len(calls) == 6
+    assert calls[4][3] == f"r2:{publish.BUCKET}/nad-r99-coverage.geojson"
+    assert "Content-Type: application/geo+json" in calls[4]
+    assert calls[5][2:4] == [f"r2:{publish.BUCKET}/nad-r99-coverage.geojson",
+                             f"r2:{publish.BUCKET}/nad-current-coverage.geojson"]
+    assert urls[-1] == f"{publish.PUBLIC_URL}/nad-current-coverage.geojson"
+
+
 def test_publish_refuses_without_credentials(release, tmp_path, monkeypatch):
     monkeypatch.setattr(publish, "ENV_FILE", tmp_path / "missing.env")
     with pytest.raises(EnvironmentError, match="R2_SECRET_ACCESS_KEY"):
