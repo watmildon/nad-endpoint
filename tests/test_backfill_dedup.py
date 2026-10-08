@@ -129,6 +129,19 @@ def test_dedup_keeps_best_nearby_copy(tmp_path):
     ]
 
 
+def test_dedup_ignores_county_descriptor(tmp_path):
+    src = write_points(tmp_path / "filled", [
+        row(1, state="LA", county="Orleans Parish", placement="Site"),
+        row("la-new-orleans:9", state="LA", county="Orleans", lat=40.0001),
+        row(2, state="AK", county="Anchorage Municipality"),
+        row(3, state="AK", county="Anchorage", number="1", lat=40.0002),
+    ])
+    out = dedup_dir(src, tmp_path / "addresses")
+    assert sorted(read_points(out, "nad_oid, drop_reason")) == [
+        ("1", None), ("2", None), ("3", "duplicate"), ("la-new-orleans:9", "duplicate"),
+    ]
+
+
 def test_dedup_prefers_nad_over_an_extra_source_copy(tmp_path):
     # Extra sources carry text ids ("ca-fresno-county:12"); NAD's numeric ids win a tie.
     src = write_points(tmp_path / "filled", [
