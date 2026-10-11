@@ -32,7 +32,7 @@ from pathlib import Path
 import duckdb
 
 from . import refdata
-from .osmcount import counts_dir
+from .osmcount import HISTORY, counts_dir
 
 URL = "https://api.ohsome.org/v1/elements/count/groupBy/boundary"
 USER_AGENT = "nad-pipeline/0.1 (OSM address history backfill)"
@@ -45,7 +45,6 @@ BUDGET = 500_000        # current addresses per request; ~2 min + ~0.3 s per 1k 
 MAX_VERTICES = 100_000  # polygon vertices per request
 RETRIES = 5
 WAIT = 300              # seconds before a retry, times the attempt number
-HISTORY = "osm-counts-history.json"
 
 
 def history_path() -> Path:
@@ -201,10 +200,13 @@ def post_ohsome(features: list[dict], dates: list[str]) -> dict:
 
 def write_history(out: Path, series: dict) -> Path:
     out.parent.mkdir(parents=True, exist_ok=True)
+    dates = series["dates"]
     out.write_text(json.dumps({
-        "source": "ohsome API v1, HeiGIT (https://ohsome.org)",
-        "url": URL, "filter": FILTER, "built": date.today().isoformat(),
+        "filter": FILTER, "built": date.today().isoformat(),
         "attribution": "© OpenStreetMap contributors",
+        # Which source covers which dates; `nad osm-counts --publish` adds the weekly ones.
+        "segments": [{"source": "ohsome API v1, HeiGIT (https://ohsome.org)", "url": URL,
+                      "interval": "monthly", "from": dates[0], "to": dates[-1]}],
         **series,
     }, separators=(",", ":")), encoding="utf-8")
     return out

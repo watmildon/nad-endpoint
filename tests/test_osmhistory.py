@@ -170,6 +170,9 @@ def test_osm_history_writes_the_series(tmp_path, monkeypatch):
     assert data["dates"] == DATES
     assert data["counties"] == {"18001": [1, 11], "18003": [3, 13]}
     assert data["filter"] == "addr:housenumber=*"
+    assert data["segments"] == [{"source": "ohsome API v1, HeiGIT (https://ohsome.org)",
+                                 "url": osmhistory.URL, "interval": "monthly",
+                                 "from": DATES[0], "to": DATES[-1]}]
     assert data["attribution"] == "© OpenStreetMap contributors"
     assert [f["geometry"]["type"] for f in sent[0]] == ["Polygon", "Polygon"]
 

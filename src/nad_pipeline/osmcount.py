@@ -43,6 +43,8 @@ REGIONS = {
     "american samoa": (-171.2, -14.7, -168.0, -10.9),
 }
 CURRENT = "osm-counts-current.json"
+HISTORY = "osm-counts-history.json"
+SOURCE = "OpenStreetMap US Layercake, addresses layer"
 
 
 def counts_dir() -> Path:
@@ -132,7 +134,7 @@ def write_counts(out: Path, counts: dict[str, int], newest: str | None, url: str
                  version: dict) -> Path:
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps({
-        "source": "OpenStreetMap US Layercake, addresses layer",
+        "source": SOURCE,
         "url": url, "etag": version["etag"], "published": version["published"],
         "newest_edit": newest, "built": date.today().isoformat(),
         "attribution": "© OpenStreetMap contributors",
@@ -140,3 +142,48 @@ def write_counts(out: Path, counts: dict[str, int], newest: str | None, url: str
         "counties": counts,
     }, separators=(",", ":")), encoding="utf-8")
     return out
+
+
+def append_to_history(history: dict, counts: dict) -> dict:
+    """The history (from `nad osm-history`) with a week's counts added as its latest date.
+
+    The date is that of the newest edit in the counts, the "as of" the viewer shows. Running
+    the same week again replaces that week's counts; a week older than the history's latest
+    date, or one landing on a date from another source, is refused rather than rewriting the
+    past. The history's "segments" record which source covers which dates.
+    """
+    history = json.loads(json.dumps(history))  # a copy; the caller's stays as it was
+    if "segments" not in history:
+        # Written before segments existed: all of it is the one source named at the top.
+        history["segments"] = [{
+            "source": history.pop("source"), "url": history.pop("url"), "interval": "monthly",
+            "from": history["dates"][0], "to": history["dates"][-1],
+        }]
+    day = (counts["newest_edit"] or counts["published"])[:10]
+    dates, series = history["dates"], history["counties"]
+    if set(counts["counties"]) != set(series):
+        missing = sorted(set(series) - set(counts["counties"]))
+        extra = sorted(set(counts["counties"]) - set(series))
+        raise ValueError(f"the counts' counties differ from the history's: "
+                         f"missing {missing[:10]}, extra {extra[:10]}")
+    last = history["segments"][-1]
+    weekly = last["source"] == SOURCE
+    if day in dates:
+        if not (weekly and last["from"] <= day):
+            raise ValueError(f"{day} is already in the history from {last['source']}")
+        i = dates.index(day)
+        for geoid, n in counts["counties"].items():
+            series[geoid][i] = n
+    elif day > dates[-1]:
+        dates.append(day)
+        for geoid, n in counts["counties"].items():
+            series[geoid].append(n)
+        if weekly:
+            last["to"] = day
+        else:
+            history["segments"].append({"source": SOURCE, "url": counts["url"],
+                                        "interval": "weekly", "from": day, "to": day})
+    else:
+        raise ValueError(f"{day} is older than the history's latest date, {dates[-1]}")
+    history["built"] = date.today().isoformat()
+    return history

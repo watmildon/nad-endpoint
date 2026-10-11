@@ -1,0 +1,38 @@
+# Weekly OSM address counts per county for the web viewer: counts Layercake's addresses
+# layer, uploads the counts to R2 and adds them to the history file there. Layercake
+# rebuilds on Sundays, so this runs early on Monday (UTC). Run it by hand from the Actions
+# tab to redo a week; the same week again replaces its counts rather than adding a date.
+name: OSM counts
+
+on:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: osm-counts
+  cancel-in-progress: false
+
+jobs:
+  counts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - name: Install the pipeline and rclone
+        run: |
+          python -m pip install .
+          sudo apt-get update
+          sudo apt-get install -y rclone
+      - name: Count, upload and add to the history
+        env:
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+        run: nad osm-counts --publish

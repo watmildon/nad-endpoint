@@ -1,3 +1,6 @@
+import json
+from pathlib import Path
+
 import pytest
 
 from nad_pipeline import config, publish
@@ -101,3 +104,53 @@ def test_publish_osm_history_has_no_alias(tmp_path, monkeypatch):
     assert len(calls) == 1
     assert calls[0][3] == f"r2:{publish.BUCKET}/osm-counts-history.json"
     assert urls == [f"{publish.PUBLIC_URL}/osm-counts-history.json"]
+
+
+def test_update_osm_history_appends_on_r2_and_keeps_the_previous(tmp_path, monkeypatch):
+    monkeypatch.setattr(publish, "rclone_path", lambda: "rclone")
+    counts = tmp_path / "osm-counts-2026-10-04.json"
+    counts.write_text(json.dumps({"url": "u", "published": "2026-10-04",
+                                  "newest_edit": "2026-10-03T00:00:00Z",
+                                  "counties": {"18001": 5}}))
+    on_r2 = {"segments": [{"source": "ohsome", "url": "o", "interval": "monthly",
+                           "from": "2026-07-01", "to": "2026-07-01"}],
+             "dates": ["2026-07-01"], "counties": {"18001": [2]}}
+    calls = []
+
+    def fake_run(command, check, env):
+        calls.append(command)
+        if command[2] == f"r2:{publish.BUCKET}/osm-counts-history.json" and \
+                not command[3].startswith("r2:"):
+            Path(command[3]).write_text(json.dumps(on_r2))
+
+    urls = publish.update_osm_history(counts, run=fake_run, environ=CREDENTIALS)
+    history = tmp_path / "osm-counts-history.json"
+    assert calls == [
+        ["rclone", "copyto", f"r2:{publish.BUCKET}/osm-counts-history.json", str(history)],
+        ["rclone", "copyto", f"r2:{publish.BUCKET}/osm-counts-history.json",
+         f"r2:{publish.BUCKET}/osm-counts-history-previous.json"],
+        ["rclone", "copyto", str(history), f"r2:{publish.BUCKET}/osm-counts-history.json",
+         "--header-upload", "Content-Type: application/json"],
+    ]
+    assert json.loads(history.read_text())["counties"] == {"18001": [2, 5]}
+    assert urls == [f"{publish.PUBLIC_URL}/osm-counts-history.json"]
+
+
+def test_update_osm_history_uploads_nothing_when_the_append_fails(tmp_path, monkeypatch):
+    monkeypatch.setattr(publish, "rclone_path", lambda: "rclone")
+    counts = tmp_path / "osm-counts-2026-10-04.json"
+    counts.write_text(json.dumps({"url": "u", "published": "2026-10-04",
+                                  "newest_edit": "2026-06-01T00:00:00Z",
+                                  "counties": {"18001": 5}}))
+    on_r2 = {"segments": [{"source": "ohsome", "url": "o", "interval": "monthly",
+                           "from": "2026-07-01", "to": "2026-07-01"}],
+             "dates": ["2026-07-01"], "counties": {"18001": [2]}}
+    calls = []
+
+    def fake_run(command, check, env):
+        calls.append(command)
+        Path(command[3]).write_text(json.dumps(on_r2))
+
+    with pytest.raises(ValueError, match="older than"):
+        publish.update_osm_history(counts, run=fake_run, environ=CREDENTIALS)
+    assert len(calls) == 1

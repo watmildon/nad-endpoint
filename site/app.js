@@ -400,8 +400,9 @@ function flyToCounty(geoid) {
 
 // ---- OSM history chart -------------------------------------------------------------------
 
-// Monthly counts from ohsome up to July 2026, fetched on first use since the file is large.
-// The weekly Layercake count is drawn as the latest point after them.
+// Monthly counts from ohsome up to July 2026, then the weekly Layercake counts, fetched on
+// first use since the file is large. A weekly count newer than the history (published but
+// not yet added to it) is drawn as the latest point.
 let historyLoad = null;
 
 function loadHistory() {
@@ -418,7 +419,10 @@ function loadHistory() {
         values.forEach((v, i) => { sum[i] += v; });
         states.set(fips, sum);
       }
-      return { dates: data.dates, counties: data.counties, states };
+      // Which source covers which dates; a file written before segments is all monthly.
+      const segments = data.segments
+        || [{ interval: "monthly", from: data.dates[0], to: data.dates[data.dates.length - 1] }];
+      return { dates: data.dates, counties: data.counties, states, segments };
     })
     .catch((err) => {
       historyLoad = null;  // let a later chart try again
@@ -458,16 +462,19 @@ async function drawTrend(el, pick, current) {
     el.textContent = "The history is not available right now.";
     return;
   }
-  const values = pick(history) || history.dates.map(() => 0);
-  const points = history.dates.map((d, i) => ({ t: Date.parse(d), v: values[i], label: monthFmt.format(Date.parse(d)) }));
-  const last = history.dates[history.dates.length - 1];
-  if (current !== undefined && osm.asOf > last) {
-    points.push({ t: Date.parse(osm.asOf), v: current, label: `${dayFmt.format(Date.parse(osm.asOf))} (weekly count)` });
+  const { dates, segments } = history;
+  const values = pick(history) || dates.map(() => 0);
+  const weekly = (d) => segments.some((s) => s.interval === "weekly" && s.from <= d && d <= s.to);
+  const label = (d, week) => (week ? `${dayFmt.format(Date.parse(d))} (weekly count)` : monthFmt.format(Date.parse(d)));
+  const points = dates.map((d, i) => ({ t: Date.parse(d), v: values[i], label: label(d, weekly(d)) }));
+  if (current !== undefined && osm.asOf > dates[dates.length - 1]) {
+    points.push({ t: Date.parse(osm.asOf), v: current, label: label(osm.asOf, true) });
   }
   el.textContent = "";
   renderTrend(el, points);
-  if (note) {
-    note.textContent = `Monthly to ${monthFmt.format(Date.parse(last))} from ohsome; the last point is the current weekly count.`;
+  const monthly = segments.find((s) => s.interval === "monthly");
+  if (note && monthly) {
+    note.textContent = `Monthly to ${monthFmt.format(Date.parse(monthly.to))} from ohsome, then weekly counts from Layercake.`;
   }
 }
 

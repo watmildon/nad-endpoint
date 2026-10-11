@@ -97,3 +97,73 @@ def test_osm_counts_fails_when_the_file_is_replaced_during_the_read(tmp_path, co
     with pytest.raises(RuntimeError, match="replaced"):
         osmcount.osm_counts(layer, version=lambda url: next(versions))
     assert not (tmp_path / "data" / "osm-counts").exists()
+
+
+OHSOME = {"source": "ohsome", "url": "https://ohsome", "interval": "monthly",
+          "from": "2026-06-01", "to": "2026-07-01"}
+
+
+def history(**extra):
+    return {"filter": "addr:housenumber=*", "segments": [dict(OHSOME)],
+            "dates": ["2026-06-01", "2026-07-01"],
+            "counties": {"18001": [1, 2], "18003": [3, 4]}, **extra}
+
+
+def week(day, counties=None, newest_edit=True):
+    return {"url": osmcount.URL, "published": "2026-10-04",
+            "newest_edit": f"{day}T09:57:35Z" if newest_edit else None,
+            "counties": counties or {"18001": 5, "18003": 6}}
+
+
+def test_a_week_is_added_after_the_monthly_history():
+    before = history()
+    after = osmcount.append_to_history(before, week("2026-10-03"))
+    assert after["dates"] == ["2026-06-01", "2026-07-01", "2026-10-03"]
+    assert after["counties"] == {"18001": [1, 2, 5], "18003": [3, 4, 6]}
+    assert after["segments"] == [OHSOME, {"source": osmcount.SOURCE, "url": osmcount.URL,
+                                          "interval": "weekly", "from": "2026-10-03",
+                                          "to": "2026-10-03"}]
+    assert before == history()  # the caller's copy is untouched
+
+
+def test_later_weeks_extend_the_weekly_segment():
+    h = osmcount.append_to_history(history(), week("2026-10-03"))
+    h = osmcount.append_to_history(h, week("2026-10-10", {"18001": 7, "18003": 8}))
+    assert h["dates"][-2:] == ["2026-10-03", "2026-10-10"]
+    assert h["counties"]["18001"][-2:] == [5, 7]
+    assert len(h["segments"]) == 2 and h["segments"][1]["to"] == "2026-10-10"
+
+
+def test_the_same_week_again_replaces_its_counts():
+    h = osmcount.append_to_history(history(), week("2026-10-03"))
+    h = osmcount.append_to_history(h, week("2026-10-03", {"18001": 9, "18003": 9}))
+    assert h["dates"] == ["2026-06-01", "2026-07-01", "2026-10-03"]
+    assert h["counties"] == {"18001": [1, 2, 9], "18003": [3, 4, 9]}
+
+
+def test_the_publication_date_stands_in_without_a_newest_edit():
+    h = osmcount.append_to_history(history(), week("ignored", newest_edit=False))
+    assert h["dates"][-1] == "2026-10-04"
+
+
+@pytest.mark.parametrize("day, message", [
+    ("2026-07-01", "already in the history from ohsome"),
+    ("2026-06-15", "older than"),
+])
+def test_the_past_is_not_rewritten(day, message):
+    with pytest.raises(ValueError, match=message):
+        osmcount.append_to_history(history(), week(day))
+
+
+def test_counties_must_match_the_history():
+    with pytest.raises(ValueError, match=r"missing \['18003'\], extra \['18005'\]"):
+        osmcount.append_to_history(history(), week("2026-10-03", {"18001": 1, "18005": 1}))
+
+
+def test_a_history_without_segments_gets_one_for_its_source():
+    legacy = history()
+    del legacy["segments"]
+    legacy.update(source="ohsome", url="https://ohsome")
+    h = osmcount.append_to_history(legacy, week("2026-10-03"))
+    assert "source" not in h and "url" not in h
+    assert h["segments"][0] == OHSOME

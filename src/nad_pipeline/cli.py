@@ -63,7 +63,8 @@ def main(argv=None):
         p = sub.add_parser(name, help=text)
         p.add_argument("--release", help="release, e.g. r24 (default: newest)")
     p = sub.add_parser("osm-counts", help="count OSM addresses per county from Layercake")
-    p.add_argument("--publish", action="store_true", help="upload the counts to Cloudflare R2")
+    p.add_argument("--publish", action="store_true",
+                   help="upload the counts to Cloudflare R2 and add them to the history there")
     p = sub.add_parser("osm-history", help="backfill monthly OSM address counts from ohsome")
     p.add_argument("--publish", action="store_true", help="upload the history to Cloudflare R2")
     args = parser.parse_args(argv)
@@ -133,9 +134,9 @@ def main(argv=None):
         path = osm_counts()
         print(path)
         if args.publish:
-            from .publish import publish_osm_counts
+            from .publish import publish_osm_counts, update_osm_history
 
-            for url in publish_osm_counts(path):
+            for url in publish_osm_counts(path) + update_osm_history(path):
                 print(url)
     elif args.command == "osm-history":
         from .osmhistory import osm_history
