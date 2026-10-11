@@ -1,5 +1,7 @@
 """Command line entry point. Stages in order:
-nad fetch | ingest | profile | refdata | transform | supplement | backfill | dedup | export | coverage | publish."""
+nad fetch | ingest | profile | refdata | transform | supplement | backfill | dedup | export | coverage | publish.
+`nad osm-counts` stands apart: it follows OSM's weekly Layercake build, not NAD releases.
+`nad osm-history` is a one-off backfill of monthly counts from ohsome behind it."""
 
 import argparse
 import sys
@@ -60,6 +62,10 @@ def main(argv=None):
                        ("publish", "upload the tileset to Cloudflare R2")):
         p = sub.add_parser(name, help=text)
         p.add_argument("--release", help="release, e.g. r24 (default: newest)")
+    p = sub.add_parser("osm-counts", help="count OSM addresses per county from Layercake")
+    p.add_argument("--publish", action="store_true", help="upload the counts to Cloudflare R2")
+    p = sub.add_parser("osm-history", help="backfill monthly OSM address counts from ohsome")
+    p.add_argument("--publish", action="store_true", help="upload the history to Cloudflare R2")
     args = parser.parse_args(argv)
 
     if args.command == "fetch":
@@ -121,6 +127,26 @@ def main(argv=None):
 
         for url in publish(args.release or _latest_release()):
             print(url)
+    elif args.command == "osm-counts":
+        from .osmcount import osm_counts
+
+        path = osm_counts()
+        print(path)
+        if args.publish:
+            from .publish import publish_osm_counts
+
+            for url in publish_osm_counts(path):
+                print(url)
+    elif args.command == "osm-history":
+        from .osmhistory import osm_history
+
+        path = osm_history(log=lambda message: print(message, flush=True))
+        print(path)
+        if args.publish:
+            from .publish import publish_osm_counts
+
+            for url in publish_osm_counts(path, alias=None):
+                print(url)
 
 
 if __name__ == "__main__":

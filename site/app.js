@@ -7,6 +7,7 @@ const TILES = `${DATA}/nad-current.pmtiles`;
 const COVERAGE = `${DATA}/nad-current-coverage.geojson`;
 const SIDECAR = `${DATA}/nad-current.json`;
 const OSM_COUNTS = `${DATA}/osm-counts-current.json`;
+const OSM_HISTORY = `${DATA}/osm-counts-history.json`;
 
 const POINT_ZOOM = 10;  // first zoom in the tileset
 const FULL_ZOOM = 14;   // zoom at which every point is present
@@ -133,7 +134,8 @@ const osmLoaded = fetch(OSM_COUNTS)
     if (!data) return;
     osm.counts = data.counties;
     osm.asOf = (data.newest_edit || data.published || "").slice(0, 10);
-    $("osm-note").textContent = `OSM address counts from OpenStreetMap US Layercake, © OpenStreetMap contributors, as of ${osm.asOf}.`;
+    $("osm-note").textContent = `OSM address counts from OpenStreetMap US Layercake, as of ${osm.asOf}, `
+      + "and monthly history from ohsome (HeiGIT); © OpenStreetMap contributors.";
     $("osm-note").hidden = false;
   })
   .catch(() => {});
@@ -279,33 +281,56 @@ function renderStates(data) {
     states.set(p.state, s);
   }
 
-  // OSM counts cover every county in the state, not only those with points.
-  const osmByFips = new Map();
-  for (const [geoid, n] of Object.entries(osm.counts || {})) {
-    osmByFips.set(geoid.slice(0, 2), (osmByFips.get(geoid.slice(0, 2)) || 0) + n);
-  }
-
-  // Every state and territory is listed, since OSM has addresses where NAD+ has none. Only
-  // rows with points can be zoomed to: the coverage polygons are what give their bounds.
+  // Every state and territory is listed, since OSM has addresses where NAD+ has none. A row
+  // opens its OSM history below it, and flies to the state when it has points: the coverage
+  // polygons are what give its bounds.
   const tbody = $("states").querySelector("tbody");
   tbody.replaceChildren();
   const codes = Object.keys(STATES).sort((a, b) => STATES[a].localeCompare(STATES[b]));
   for (const code of codes) {
     const s = states.get(code);
+    const fips = STATE_FIPS[code];
+    const total = osmStateTotal(fips);
     const tr = document.createElement("tr");
+    tr.className = "go";
+    tr.tabIndex = 0;
+    tr.setAttribute("aria-expanded", "false");
     tr.innerHTML = `<td>${esc(STATES[code])}</td>
       <td class="num">${s ? fmt.format(s.points) : "–"}</td>
-      <td class="num">${osm.counts ? fmt.format(osmByFips.get(STATE_FIPS[code]) || 0) : "–"}</td>`;
-    if (s) {
-      tr.tabIndex = 0;
-      tr.classList.add("go");
-      const go = () => flyToState(s);
-      tr.addEventListener("click", go);
-      tr.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } });
-    }
+      <td class="num">${total === undefined ? "–" : fmt.format(total)}</td>`;
+    const go = () => {
+      if (toggleStateTrend(tr, fips) && s) flyToState(s);
+    };
+    tr.addEventListener("click", go);
+    tr.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } });
     tbody.append(tr);
   }
   $("states").hidden = false;
+}
+
+// OSM counts cover every county in the state, not only those with points.
+function osmStateTotal(fips) {
+  if (!osm.counts) return undefined;
+  let total = 0;
+  for (const [geoid, n] of Object.entries(osm.counts)) if (geoid.startsWith(fips)) total += n;
+  return total;
+}
+
+// One state's history is open at a time, in a row under the state's own. Returns whether
+// the row was opened (rather than closed).
+function toggleStateTrend(tr, fips) {
+  const open = tr.nextElementSibling?.classList.contains("detail");
+  for (const row of tr.parentElement.querySelectorAll("tr.detail")) row.remove();
+  for (const row of tr.parentElement.querySelectorAll("tr[aria-expanded=true]")) row.setAttribute("aria-expanded", "false");
+  if (open) return false;
+  const detail = document.createElement("tr");
+  detail.className = "detail";
+  detail.innerHTML = `<td colspan="3"><div class="trend-title">Addresses in OpenStreetMap</div>
+    <div class="trend"></div><p class="trend-note"></p></td>`;
+  tr.after(detail);
+  tr.setAttribute("aria-expanded", "true");
+  drawTrend(detail.querySelector(".trend"), (h) => h.states.get(fips), osmStateTotal(fips));
+  return true;
 }
 
 const NAD_PAGE = "https://www.transportation.gov/gis/national-address-database";
@@ -373,6 +398,181 @@ function flyToCounty(geoid) {
   map.fitBounds(county.bounds, { padding: sidePadding(), maxZoom: 15 });
 }
 
+// ---- OSM history chart -------------------------------------------------------------------
+
+// Monthly counts from ohsome up to July 2026, fetched on first use since the file is large.
+// The weekly Layercake count is drawn as the latest point after them.
+let historyLoad = null;
+
+function loadHistory() {
+  historyLoad ||= fetch(OSM_HISTORY)
+    .then((res) => {
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.json();
+    })
+    .then((data) => {
+      const states = new Map();
+      for (const [geoid, values] of Object.entries(data.counties)) {
+        const fips = geoid.slice(0, 2);
+        const sum = states.get(fips) || new Array(values.length).fill(0);
+        values.forEach((v, i) => { sum[i] += v; });
+        states.set(fips, sum);
+      }
+      return { dates: data.dates, counties: data.counties, states };
+    })
+    .catch((err) => {
+      historyLoad = null;  // let a later chart try again
+      throw err;
+    });
+  return historyLoad;
+}
+
+const TREND_KEY = "nad-trend-open";
+let trendOpen = true;
+try {
+  trendOpen = localStorage.getItem(TREND_KEY) !== "0";
+} catch {
+  // No storage (private window, blocked site data): keep the default for this visit.
+}
+
+function setTrendOpen(open) {
+  trendOpen = open;
+  try {
+    localStorage.setItem(TREND_KEY, open ? "1" : "0");
+  } catch {
+    // As above; the choice still holds until the page is reloaded.
+  }
+}
+
+const monthFmt = new Intl.DateTimeFormat("en-US", { month: "short", year: "numeric", timeZone: "UTC" });
+const dayFmt = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
+const compact = new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 });
+
+async function drawTrend(el, pick, current) {
+  const note = el.nextElementSibling;
+  el.textContent = "Loading history…";
+  let history;
+  try {
+    history = await loadHistory();
+  } catch {
+    el.textContent = "The history is not available right now.";
+    return;
+  }
+  const values = pick(history) || history.dates.map(() => 0);
+  const points = history.dates.map((d, i) => ({ t: Date.parse(d), v: values[i], label: monthFmt.format(Date.parse(d)) }));
+  const last = history.dates[history.dates.length - 1];
+  if (current !== undefined && osm.asOf > last) {
+    points.push({ t: Date.parse(osm.asOf), v: current, label: `${dayFmt.format(Date.parse(osm.asOf))} (weekly count)` });
+  }
+  el.textContent = "";
+  renderTrend(el, points);
+  if (note) {
+    note.textContent = `Monthly to ${monthFmt.format(Date.parse(last))} from ohsome; the last point is the current weekly count.`;
+  }
+}
+
+// Rounds up to 1, 2 or 5 times a power of ten, so the top gridline is a clean number.
+function niceMax(v) {
+  if (v <= 0) return 10;
+  const p = 10 ** Math.floor(Math.log10(v));
+  return [1, 2, 5, 10].map((m) => m * p).find((m) => m >= v);
+}
+
+function renderTrend(el, points) {
+  const W = Math.max(200, el.clientWidth || 260);
+  const H = 120;
+  const m = { top: 8, right: 8, bottom: 18, left: 34 };
+  const t0 = points[0].t;
+  const t1 = points[points.length - 1].t;
+  const top = niceMax(Math.max(...points.map((p) => p.v)));
+  const x = (t) => m.left + ((t - t0) / (t1 - t0)) * (W - m.left - m.right);
+  const y = (v) => H - m.bottom - (v / top) * (H - m.top - m.bottom);
+  const line = points.map((p, i) => `${i ? "L" : "M"}${x(p.t).toFixed(1)},${y(p.v).toFixed(1)}`).join("");
+  const area = `${line}L${x(t1).toFixed(1)},${y(0)}L${x(t0).toFixed(1)},${y(0)}Z`;
+
+  const grid = [0, top / 2, top].map((v) => `<line class="grid" x1="${m.left}" x2="${W - m.right}"
+    y1="${y(v)}" y2="${y(v)}"/><text class="axis" x="${m.left - 5}" y="${y(v) + 3.5}" text-anchor="end">${compact.format(v)}</text>`).join("");
+  const firstYear = new Date(t0).getUTCFullYear();
+  const lastYear = new Date(t1).getUTCFullYear();
+  const step = Math.ceil((lastYear - firstYear) / 3);
+  const years = [];
+  for (let yr = firstYear; yr <= lastYear; yr += step) years.push(yr);
+  const ticks = years.map((yr) => {
+    const tx = x(Date.UTC(yr, 0, 1));
+    const anchor = tx > W - m.right - 14 ? "end" : "middle";
+    return `<text class="axis" x="${tx.toFixed(1)}" y="${H - 4}" text-anchor="${anchor}">${yr}</text>`;
+  }).join("");
+  const end = points[points.length - 1];
+  const first = points.find((p) => p.v > 0);
+  const summary = first
+    ? `OpenStreetMap addresses over time: ${fmt.format(first.v)} in ${first.label}, ${fmt.format(end.v)} by ${end.label}.`
+    : "OpenStreetMap addresses over time: none recorded.";
+
+  el.innerHTML = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" tabindex="0"
+      aria-label="${esc(summary)} Use the arrow keys to read each month.">
+    ${grid}${ticks}
+    <path class="area" d="${area}"/>
+    <path class="line" d="${line}"/>
+    <line class="cross" y1="${m.top}" y2="${H - m.bottom}" visibility="hidden"/>
+    <circle class="end" cx="${x(end.t).toFixed(1)}" cy="${y(end.v).toFixed(1)}" r="4"/>
+    <circle class="focus" r="4" visibility="hidden"/>
+    <rect class="hit" x="${m.left}" y="0" width="${W - m.left - m.right}" height="${H}"/>
+  </svg><div class="tip" hidden aria-live="polite"><strong></strong><span></span></div>`;
+
+  const svg = el.querySelector("svg");
+  const cross = svg.querySelector(".cross");
+  const focus = svg.querySelector(".focus");
+  const tip = el.querySelector(".tip");
+  let at = points.length - 1;
+
+  const show = (i) => {
+    at = Math.max(0, Math.min(points.length - 1, i));
+    const p = points[at];
+    const px = x(p.t);
+    const py = y(p.v);
+    cross.setAttribute("x1", px);
+    cross.setAttribute("x2", px);
+    focus.setAttribute("cx", px);
+    focus.setAttribute("cy", py);
+    cross.setAttribute("visibility", "visible");
+    focus.setAttribute("visibility", "visible");
+    tip.querySelector("strong").textContent = fmt.format(p.v);
+    tip.querySelector("span").textContent = p.label;
+    tip.hidden = false;
+    // Keep the tip inside the chart: centred over the point, clamped at both edges, and
+    // below the point when there is no room above it.
+    const half = tip.offsetWidth / 2;
+    tip.style.left = `${Math.max(half, Math.min(W - half, px))}px`;
+    tip.style.top = `${py - 10 >= tip.offsetHeight ? py - 10 : py + 10 + tip.offsetHeight}px`;
+  };
+  const hide = () => {
+    cross.setAttribute("visibility", "hidden");
+    focus.setAttribute("visibility", "hidden");
+    tip.hidden = true;
+  };
+  const nearest = (clientX) => {
+    const box = svg.getBoundingClientRect();
+    const t = t0 + ((clientX - box.left - m.left) / (W - m.left - m.right)) * (t1 - t0);
+    let best = 0;
+    for (let i = 1; i < points.length; i++) {
+      if (Math.abs(points[i].t - t) < Math.abs(points[best].t - t)) best = i;
+    }
+    return best;
+  };
+  svg.addEventListener("pointermove", (e) => show(nearest(e.clientX)));
+  svg.addEventListener("pointerleave", hide);
+  svg.addEventListener("focus", () => show(at));
+  svg.addEventListener("blur", hide);
+  svg.addEventListener("keydown", (e) => {
+    const moves = { ArrowLeft: -1, ArrowRight: 1, PageUp: -12, PageDown: 12 };
+    if (e.key in moves) show(at + moves[e.key]);
+    else if (e.key === "Home") show(0);
+    else if (e.key === "End") show(points.length - 1);
+    else return;
+    e.preventDefault();
+  });
+}
+
 // ---- interaction -------------------------------------------------------------------------
 
 let hovered = null;
@@ -413,6 +613,23 @@ function box(p, r) {
 
 function popup(lngLat, html) {
   const p = new maplibregl.Popup({ maxWidth: "320px" }).setLngLat(lngLat).setHTML(html).addTo(map);
+  // The history in a county popup opens or stays shut as the reader last left it, in any
+  // popup. It is drawn the first time it is open, since a shut <details> has no width.
+  const fold = p.getElement().querySelector(".trend-fold");
+  if (fold) {
+    const chart = fold.querySelector(".trend");
+    const draw = () => {
+      if (!fold.open || chart.dataset.drawn) return;
+      chart.dataset.drawn = "1";
+      const geoid = chart.dataset.geoid;
+      drawTrend(chart, (h) => h.counties[geoid], osm.counts?.[geoid]);
+    };
+    fold.addEventListener("toggle", () => {
+      setTrendOpen(fold.open);
+      draw();
+    });
+    draw();
+  }
   p.getElement().addEventListener("click", (e) => {
     const copy = e.target.closest("button.copy");
     if (copy) copyTags(copy);
@@ -509,6 +726,10 @@ function osmHtml(p) {
   return `<div class="osm">
     <div class="row"><span>Addresses in OpenStreetMap</span><span>${fmt.format(n)}</span></div>
     <div class="sub">OSM as of ${esc(osm.asOf)}</div>
+    <details class="trend-fold"${trendOpen ? " open" : ""}>
+      <summary>Over time</summary>
+      <div class="trend" data-geoid="${esc(p.geoid)}"></div><p class="trend-note"></p>
+    </details>
   </div>`;
 }
 

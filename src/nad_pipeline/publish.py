@@ -2,6 +2,9 @@
 
 The coverage GeoJSON from `nad coverage` goes up with it when it has been built; the web
 viewer reads it, but tile consumers do not need it, so its absence does not stop a publish.
+The OSM address counts from `nad osm-counts` follow Layercake's weekly schedule rather than
+NAD releases, so they are uploaded on their own by `nad osm-counts --publish`, as is their
+history from `nad osm-history --publish`.
 
 Credentials come from the environment (R2_ACCOUNT_ID, R2_ACCESS_KEY_ID,
 R2_SECRET_ACCESS_KEY), or from data/r2.env (KEY=value lines, git-ignored) for any that are
@@ -18,6 +21,7 @@ from pathlib import Path
 from . import config
 from .coverage import coverage_path
 from .export import export_dir
+from .osmcount import CURRENT as OSM_COUNTS_CURRENT
 
 BUCKET = os.environ.get("NAD_R2_BUCKET", "nad-tiles")
 PUBLIC_URL = os.environ.get("NAD_PUBLIC_URL", "https://nad.watmildon.org").rstrip("/")
@@ -88,6 +92,22 @@ def publish_commands(release: str, pmtiles: Path, sidecar: Path,
             [rclone, "copyto", f"{dest}/{coverage.name}", f"{dest}/nad-current-coverage.geojson"],
         ]
     return commands
+
+
+def publish_osm_counts(counts: Path, alias: str | None = OSM_COUNTS_CURRENT,
+                       run=subprocess.run, environ=os.environ) -> list[str]:
+    """Upload OSM counts from `nad osm-counts` or `nad osm-history`, and point an alias at
+    them when given one."""
+    rclone = rclone_path()
+    dest = f"r2:{BUCKET}"
+    env = rclone_env(environ)
+    commands = [[rclone, "copyto", str(counts), f"{dest}/{counts.name}",
+                 "--header-upload", "Content-Type: application/json"]]
+    if alias:
+        commands.append([rclone, "copyto", f"{dest}/{counts.name}", f"{dest}/{alias}"])
+    for command in commands:
+        run(command, check=True, env=env)
+    return [f"{PUBLIC_URL}/{name}" for name in (counts.name, alias) if name]
 
 
 def publish(release: str, run=subprocess.run, environ=os.environ) -> list[str]:

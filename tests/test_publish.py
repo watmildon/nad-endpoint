@@ -74,3 +74,30 @@ def test_publish_requires_export_first(release, tmp_path):
     (tmp_path / "r99" / "export" / "nad-r99.pmtiles").unlink()
     with pytest.raises(FileNotFoundError, match="nad export"):
         publish.publish(release, run=lambda *a, **k: None, environ=CREDENTIALS)
+
+
+def test_publish_osm_counts_uploads_then_aliases(tmp_path, monkeypatch):
+    monkeypatch.setattr(publish, "rclone_path", lambda: "rclone")
+    counts = tmp_path / "osm-counts-2026-10-04.json"
+    counts.write_text("{}")
+    calls = []
+    urls = publish.publish_osm_counts(counts, run=lambda c, check, env: calls.append(c),
+                                      environ=CREDENTIALS)
+    assert calls[0][2:4] == [str(counts), f"r2:{publish.BUCKET}/osm-counts-2026-10-04.json"]
+    assert "Content-Type: application/json" in calls[0]
+    assert calls[1][2:4] == [f"r2:{publish.BUCKET}/osm-counts-2026-10-04.json",
+                             f"r2:{publish.BUCKET}/osm-counts-current.json"]
+    assert urls == [f"{publish.PUBLIC_URL}/osm-counts-2026-10-04.json",
+                    f"{publish.PUBLIC_URL}/osm-counts-current.json"]
+
+
+def test_publish_osm_history_has_no_alias(tmp_path, monkeypatch):
+    monkeypatch.setattr(publish, "rclone_path", lambda: "rclone")
+    history = tmp_path / "osm-counts-history.json"
+    history.write_text("{}")
+    calls = []
+    urls = publish.publish_osm_counts(history, alias=None,
+                                      run=lambda c, check, env: calls.append(c), environ=CREDENTIALS)
+    assert len(calls) == 1
+    assert calls[0][3] == f"r2:{publish.BUCKET}/osm-counts-history.json"
+    assert urls == [f"{publish.PUBLIC_URL}/osm-counts-history.json"]

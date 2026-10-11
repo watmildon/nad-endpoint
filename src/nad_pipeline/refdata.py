@@ -109,8 +109,10 @@ def boundary_file(ref: Path, kind: str) -> Path:
     return ref / stem / f"{stem}.shp"
 
 
-def download_boundaries(ref: Path):
-    for kind, url in BOUNDARIES.items():
+def download_boundaries(ref: Path, kinds=tuple(BOUNDARIES)):
+    ref.mkdir(parents=True, exist_ok=True)
+    for kind in kinds:
+        url = BOUNDARIES[kind]
         shp = boundary_file(ref, kind)
         if not shp.exists():
             archive = ref / url.rsplit("/", 1)[1]
