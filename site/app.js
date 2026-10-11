@@ -6,6 +6,7 @@ const DATA = (params.get("data") || "https://nad.watmildon.org").replace(/\/$/, 
 const TILES = `${DATA}/nad-current.pmtiles`;
 const COVERAGE = `${DATA}/nad-current-coverage.geojson`;
 const SIDECAR = `${DATA}/nad-current.json`;
+const OSM_COUNTS = `${DATA}/osm-counts-current.json`;
 
 const POINT_ZOOM = 10;  // first zoom in the tileset
 const FULL_ZOOM = 14;   // zoom at which every point is present
@@ -33,6 +34,17 @@ const STATES = {
   VT: "Vermont", VA: "Virginia", WA: "Washington", WV: "West Virginia", WI: "Wisconsin",
   WY: "Wyoming", PR: "Puerto Rico", VI: "U.S. Virgin Islands", GU: "Guam",
   AS: "American Samoa", MP: "Northern Mariana Islands",
+};
+
+// Census state codes, the first two digits of a county GEOID.
+const STATE_FIPS = {
+  AL: "01", AK: "02", AZ: "04", AR: "05", CA: "06", CO: "08", CT: "09", DE: "10", DC: "11",
+  FL: "12", GA: "13", HI: "15", ID: "16", IL: "17", IN: "18", IA: "19", KS: "20", KY: "21",
+  LA: "22", ME: "23", MD: "24", MA: "25", MI: "26", MN: "27", MS: "28", MO: "29", MT: "30",
+  NE: "31", NV: "32", NH: "33", NJ: "34", NM: "35", NY: "36", NC: "37", ND: "38", OH: "39",
+  OK: "40", OR: "41", PA: "42", RI: "44", SC: "45", SD: "46", TN: "47", TX: "48", UT: "49",
+  VT: "50", VA: "51", WA: "53", WV: "54", WI: "55", WY: "56", AS: "60", GU: "66", MP: "69",
+  PR: "72", VI: "78",
 };
 
 // ---- small DOM helpers -------------------------------------------------------------------
@@ -111,6 +123,20 @@ function sidePadding() {
 }
 
 const coverage = { byGeoid: new Map(), sources: {} };
+
+// OSM address counts per county, rebuilt weekly apart from NAD releases. Fetched straight
+// away, not on map load; the viewer works without them.
+const osm = { counts: null, asOf: null };
+const osmLoaded = fetch(OSM_COUNTS)
+  .then((res) => (res.ok ? res.json() : null))
+  .then((data) => {
+    if (!data) return;
+    osm.counts = data.counties;
+    osm.asOf = (data.newest_edit || data.published || "").slice(0, 10);
+    $("osm-note").textContent = `OSM address counts from OpenStreetMap US Layercake, © OpenStreetMap contributors, as of ${osm.asOf}.`;
+    $("osm-note").hidden = false;
+  })
+  .catch(() => {});
 
 function byOrigin(nad, mixed, other) {
   return ["match", ["get", "origin"], "other", other, "mixed", mixed, nad];
@@ -237,6 +263,7 @@ async function loadCoverage() {
     coverage.byGeoid.set(f.properties.geoid, { ...f.properties, bounds: lngLatBounds(b) });
   }
 
+  await osmLoaded;
   renderStates(data);
   renderSources(data.release, coverage.sources);
   $("coverage-status").textContent = `${fmt.format(data.features.length)} counties hold points.`;
@@ -246,35 +273,39 @@ function renderStates(data) {
   const states = new Map();
   for (const f of data.features) {
     const p = f.properties;
-    const s = states.get(p.state) || { points: 0, other: 0, ...emptyBounds() };
+    const s = states.get(p.state) || { points: 0, ...emptyBounds() };
     s.points += p.points;
-    s.other += p.other;
     eachCoordinate(f.geometry, ([x, y]) => extend(s, x, y));
     states.set(p.state, s);
   }
 
+  // OSM counts cover every county in the state, not only those with points.
+  const osmByFips = new Map();
+  for (const [geoid, n] of Object.entries(osm.counts || {})) {
+    osmByFips.set(geoid.slice(0, 2), (osmByFips.get(geoid.slice(0, 2)) || 0) + n);
+  }
+
+  // Every state and territory is listed, since OSM has addresses where NAD+ has none. Only
+  // rows with points can be zoomed to: the coverage polygons are what give their bounds.
   const tbody = $("states").querySelector("tbody");
   tbody.replaceChildren();
-  const codes = [...states.keys()].sort((a, b) => (STATES[a] || a).localeCompare(STATES[b] || b));
+  const codes = Object.keys(STATES).sort((a, b) => STATES[a].localeCompare(STATES[b]));
   for (const code of codes) {
     const s = states.get(code);
     const tr = document.createElement("tr");
-    tr.tabIndex = 0;
-    tr.innerHTML = `<td>${esc(STATES[code] || code)}</td>
-      <td class="num">${fmt.format(s.points)}</td>
-      <td class="num"><span class="share">${s.other ? `${pct(s.other, s.points) || "<1"}%` : "–"}</span></td>`;
-    const go = () => flyToState(s);
-    tr.addEventListener("click", go);
-    tr.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } });
+    tr.innerHTML = `<td>${esc(STATES[code])}</td>
+      <td class="num">${s ? fmt.format(s.points) : "–"}</td>
+      <td class="num">${osm.counts ? fmt.format(osmByFips.get(STATE_FIPS[code]) || 0) : "–"}</td>`;
+    if (s) {
+      tr.tabIndex = 0;
+      tr.classList.add("go");
+      const go = () => flyToState(s);
+      tr.addEventListener("click", go);
+      tr.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } });
+    }
     tbody.append(tr);
   }
   $("states").hidden = false;
-
-  const missing = Object.keys(STATES).filter((c) => !states.has(c)).map((c) => STATES[c]);
-  if (missing.length) {
-    $("no-data").textContent = `No points: ${missing.join(", ")}.`;
-    $("no-data").hidden = false;
-  }
 }
 
 const NAD_PAGE = "https://www.transportation.gov/gis/national-address-database";
@@ -470,6 +501,17 @@ function addressHtml(features) {
   return `<div class="pop">${body}${more}${thin}<p class="sub"><a href="${osm}" target="_blank" rel="noopener">Open this spot on OpenStreetMap</a></p></div>`;
 }
 
+// OSM counts elements with addr:housenumber, a different measure from the points above, so
+// the two are shown apart and never compared.
+function osmHtml(p) {
+  const n = osm.counts?.[p.geoid];
+  if (n === undefined) return "";
+  return `<div class="osm">
+    <div class="row"><span>Addresses in OpenStreetMap</span><span>${fmt.format(n)}</span></div>
+    <div class="sub">OSM as of ${esc(osm.asOf)}</div>
+  </div>`;
+}
+
 function countyHtml(p) {
   if (!p) return "";
   const nadShare = pct(p.nad, p.points);
@@ -490,6 +532,7 @@ function countyHtml(p) {
     </div>
     <div class="sub">NAD ${fmt.format(p.nad)} · non-NAD ${fmt.format(p.other)}</div>
     <ul>${list}</ul>${more}
+    ${osmHtml(p)}
     <button type="button" class="zoom" data-geoid="${esc(p.geoid)}">${ZOOM_ICON}Zoom to county</button>
   </div>`;
 }

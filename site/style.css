@@ -131,12 +131,11 @@ h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.04em; color: 
 .note { color: var(--muted); font-size: 12.5px; margin: 8px 0 0; }
 
 .states { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
-.states th { text-align: left; font-weight: 600; color: var(--muted); padding: 4px 6px; border-bottom: 1px solid var(--line); }
+.states th { text-align: left; white-space: nowrap; font-weight: 600; color: var(--muted); padding: 4px 6px; border-bottom: 1px solid var(--line); }
 .states td { padding: 3px 6px; border-bottom: 1px solid var(--line); }
 .states .num { text-align: right; }
-.states tbody tr { cursor: pointer; }
-.states tbody tr:hover, .states tbody tr:focus { background: var(--hover); outline: none; }
-.states .share { display: inline-block; min-width: 3ch; }
+.states tbody tr.go { cursor: pointer; }
+.states tbody tr.go:hover, .states tbody tr.go:focus { background: var(--hover); outline: none; }
 
 .sources { list-style: none; margin: 0; padding: 0; }
 .sources li { padding: 6px 0; border-bottom: 1px solid var(--line); }
@@ -168,6 +167,8 @@ h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.04em; color: 
 .pop .bar span { display: block; height: 100%; }
 .pop ul { list-style: none; margin: 6px 0 0; padding: 0; }
 .pop li { display: flex; justify-content: space-between; gap: 12px; padding: 2px 0; font-variant-numeric: tabular-nums; }
+.pop .osm { border-top: 1px solid var(--line); margin-top: 8px; padding-top: 6px; }
+.pop .osm .row { display: flex; justify-content: space-between; gap: 12px; font-variant-numeric: tabular-nums; }
 .pop li .kind { width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; display: inline-block; }
 .pop .addr + .addr { border-top: 1px solid var(--line); margin-top: 6px; padding-top: 6px; }
 .pop .tagbox { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-top: 4px; }
