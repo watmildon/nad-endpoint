@@ -1,14 +1,30 @@
 {
   "AL": [
+    {"typo": "Aut", "city": "Autaugaville", "county": "Autauga", "note": "code; 3 of 7 points inside Autaugaville, GNIS 4.0 km away"},
+    {"typo": "Avl", "city": "Autaugaville", "county": "Autauga", "note": "code; 29% of points inside Autaugaville, GNIS Autaugaville 0.8 km away"},
+    {"typo": "Bil", "city": "Billingsley", "county": "Autauga", "note": "code; 12% of points inside Billingsley, GNIS Billingsley 2.7 km away"},
     {"typo": "Boazm", "city": "Boaz", "county": "Marshall"},
+    {"typo": "Boo", "city": "Booth", "county": "Autauga", "note": "code; GNIS Booth 2.4 km away, next fitting name 10 km"},
     {"typo": "Cusetta", "city": "Cusseta", "county": "Chambers"},
+    {"typo": "Dea", "city": "Deatsville", "county": "Autauga", "note": "code; 13 of 19 points in ZIP 36022, which NAD (4,834 rows) and OSM addresses give as Deatsville; GNIS Deatsville 9 km away"},
     {"typo": "Hartsville", "city": "Hartselle", "county": "Morgan"},
+    {"typo": "Ind", "city": "Independence", "county": "Autauga", "note": "code; GNIS Independence 3.0 km away, the only fitting name within 25 km"},
     {"typo": "Layfette", "city": "La Fayette", "county": "Chambers"},
     {"typo": "Mar", "city": "Marbury", "county": "Autauga", "note": "abbreviation; 88% of points inside Marbury"},
+    {"typo": "MN", "city": "Minter", "county": "Wilcox", "note": "code; GNIS Minter 14.4 km away; NAD rows with ZIP 36761 are Minter"},
+    {"typo": "Ok", "city": "Old Kingston", "county": "Autauga", "note": "code; GNIS Old Kingston 1.3 km away, next fitting name 6.5 km"},
     {"typo": "Peidmont", "city": "Piedmont", "county": "Cleburne"},
     {"typo": "Pincard", "city": "Pinckard", "county": "Dale"},
+    {"typo": "PL", "city": "Pine Level", "county": "Autauga", "note": "code; 64% of points inside Pine Level, GNIS Pine Level 1.7 km away"},
+    {"typo": "Pla", "city": "Plantersville", "county": "Autauga", "note": "code; GNIS Plantersville 6.9 km away, next fitting name 19.8 km"},
+    {"typo": "Pra", "city": "Prattville", "county": "Autauga", "note": "code; 90% of points inside Prattville, GNIS Prattville 0.6 km away"},
+    {"typo": "TH", "city": "Thomasville", "county": "Wilcox", "note": "code; 96 of 136 points in ZIP 36784, which OSM addresses (16) give as Thomasville; the source's street field has 'THOMASV'"},
+    {"typo": "TS", "city": "Thomaston", "county": "Wilcox", "note": "code; all points in ZIP 36783, which one OSM address gives as Thomaston; GNIS Thomaston 15.8 km away, the only fitting name"},
     {"typo": "Vallley", "city": "Valley", "county": "Chambers"},
-    {"typo": "Waverley", "city": "Waverly", "county": "Chambers"}
+    {"typo": "Ver", "city": "Verbena", "county": "Autauga", "note": "code; GNIS Verbena 9.7 km away; NAD rows with ZIP 36091 are Verbena"},
+    {"typo": "VR", "city": "Vredenburgh", "county": "Wilcox", "note": "code; GNIS Vredenburgh 2.8 km away, next fitting name 17.8 km"},
+    {"typo": "Waverley", "city": "Waverly", "county": "Chambers"},
+    {"typo": "Whi", "city": "White City", "county": "Autauga", "note": "code; GNIS White City 1.3 km away, next fitting name 8.8 km"}
   ],
   "AR": [
     {"typo": "Gassille", "city": "Gassville", "county": "Baxter"}
