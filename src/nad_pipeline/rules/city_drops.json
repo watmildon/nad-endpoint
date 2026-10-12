@@ -1,0 +1,57 @@
+{
+  "*": [
+    {"value": "#N/A"},
+    {"value": "Building"},
+    {"value": "Building A House"},
+    {"value": "Building House"},
+    {"value": "CCCCC"},
+    {"value": "Cnty"},
+    {"value": "Comminication Tower"},
+    {"value": "Empty"},
+    {"value": "GPS"},
+    {"value": "None Avail"},
+    {"value": "Out"},
+    {"value": "Out Of Area"},
+    {"value": "Out Of Jurisdiction"},
+    {"value": "State Highway"},
+    {"value": "Test"},
+    {"value": "Unicorporated"},
+    {"value": "Unincoporated"},
+    {"value": "Unincoprorated"},
+    {"value": "Unincorporate"},
+    {"value": "Unincorporated Community"},
+    {"value": "Unincorported"},
+    {"value": "Unkown"}
+  ],
+  "CO": [
+    {"value": "Uninc Adam", "note": "Arapahoe County rows"},
+    {"value": "Uninc Elbe", "note": "Arapahoe County rows"}
+  ],
+  "NM": [
+    {"value": "Armstrong Steel Building"},
+    {"value": "C"},
+    {"value": "NM", "note": "the state code"}
+  ],
+  "OR": [
+    {"value": "Usfs"}
+  ],
+  "TN": [
+    {"value": "TN", "note": "the state code"}
+  ],
+  "TX": [
+    {"value": "Glasscock Co.", "note": "a county"},
+    {"value": "Tx", "note": "the state code"},
+    {"value": "Victoria-County", "note": "a county"}
+  ],
+  "WA": [
+    {"value": "Coungy N"},
+    {"value": "County E"},
+    {"value": "County N"},
+    {"value": "County NE"},
+    {"value": "County NW"},
+    {"value": "County S"},
+    {"value": "County SE"},
+    {"value": "County SW"},
+    {"value": "County W"}
+  ]
+}

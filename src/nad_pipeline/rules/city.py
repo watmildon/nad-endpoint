@@ -39,6 +39,9 @@ _CODE = re.compile(r"[A-Za-z]{1,4}")
 # Reviewed misspellings found in NAD r24, by state: the typo, the place it stands for, and
 # the county it was seen in. Built from the city_not_in_reference report.
 TYPOS_FILE = Path(__file__).with_name("city_typos.json")
+# Reviewed values that are not a place ("Unkown", "County NE", "Tx"), by state; "*" applies in
+# every state. A dropped value is treated like a placeholder, leaving the row to backfill.
+DROPS_FILE = Path(__file__).with_name("city_drops.json")
 _COUNTY_DESCRIPTOR = re.compile(
     r"\s+(county|parish|borough|census area|municipality|city and borough)$", re.IGNORECASE)
 
@@ -70,6 +73,12 @@ def load_city_typos(path: Path = TYPOS_FILE) -> list[tuple[str, str, str, str]]:
                 for state, entries in json.load(f).items() for e in entries]
 
 
+def load_city_drops(path: Path = DROPS_FILE) -> list[tuple[str, str]]:
+    """(state or "*", value) rows from the reviewed drop file."""
+    with open(path, encoding="utf-8") as f:
+        return [(state, e["value"]) for state, entries in json.load(f).items() for e in entries]
+
+
 def edit_distance(a: str, b: str) -> int:
     """Edits (insert, delete, substitute, swap two adjacent letters) that turn a into b."""
     prev2, prev = None, list(range(len(b) + 1))
@@ -92,8 +101,9 @@ def _misspelling_of(key: str, other: str) -> bool:
 class PlaceNames:
     """Proper spellings of place names, combined from several reference sources."""
 
-    def __init__(self, rows, typos=()):
-        """rows: iterable of (state, name, source); typos: (state, county, typo, city)."""
+    def __init__(self, rows, typos=(), drops=()):
+        """rows: iterable of (state, name, source); typos: (state, county, typo, city);
+        drops: (state or "*", value)."""
         votes = defaultdict(Counter)
         sources = defaultdict(dict)
         for state, name, source in rows:
@@ -114,6 +124,7 @@ class PlaceNames:
         # By county, so the same typo can stand for different places in a large state.
         self.typos = {(state, county_key(county), city_key(typo)): city
                       for state, county, typo, city in typos}
+        self.drops = {(state, city_key(value)) for state, value in drops}
 
     def lookup(self, state: str | None, name: str, national: bool = True) -> str | None:
         key = city_key(name)
@@ -132,11 +143,20 @@ class PlaceNames:
             return self.by_state.get((state, city_key(city)), city)
         return None
 
+    def dropped(self, state: str | None, name: str) -> bool:
+        """Whether a reviewed drop entry says this value is not a place ("Unkown", "County NE").
+
+        A name that is itself a place in the state is never dropped.
+        """
+        key = city_key(name)
+        return (((state, key) in self.drops or ("*", key) in self.drops)
+                and not self.lookup(state, name, national=False))
+
 
 def _candidate(raw, state, county, names: PlaceNames) -> str | None:
     """Clean one place field; None if it holds a placeholder or the county, not a city."""
     value = clean(raw)
-    if value is None or value.casefold() in CITY_PLACEHOLDERS:
+    if value is None or value.casefold() in CITY_PLACEHOLDERS or names.dropped(state, value):
         return None
     value = _GOVERNMENT_PREFIX.sub("", value)
     value = _TRAILING_ZIP.sub("", value)  # "Sonora 76950"

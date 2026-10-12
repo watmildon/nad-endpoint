@@ -5,7 +5,8 @@ import pytest
 
 from nad_pipeline import ingest
 from nad_pipeline.rules.city import (
-    PlaceNames, choose_city, city_key, county_key, edit_distance, load_city_typos,
+    PlaceNames, choose_city, city_key, county_key, edit_distance, load_city_drops,
+    load_city_typos,
 )
 from nad_pipeline.transform import osm_glob, report_dir, transform_dir
 
@@ -225,6 +226,38 @@ def test_city_typos_file_is_consistent():
         key = (state, county_key(county), city_key(typo))
         assert seen.setdefault(key, city) == city, f"{key} maps to {seen[key]} and {city}"
         assert city_key(typo) != city_key(city)
+
+
+NAMES_DROPS = PlaceNames([
+    ("WA", "Pomeroy", "census_place"), ("TX", "Snyder", "census_place"),
+    ("OR", "County N", "gnis"),
+], drops=[("*", "Unkown"), ("WA", "County N"), ("TX", "Tx"), ("OR", "County N")])
+
+
+@pytest.mark.parametrize("fields, state, expected, flags", [
+    (("Unkown", None, None), "NM", None, ["no_city"]),
+    (("UNKOWN", None, None), "WA", None, ["no_city"]),
+    (("County N", None, None), "WA", None, ["no_city"]),
+    (("COUNTY N", "Pomeroy", None), "WA", "Pomeroy", ["city_from_inc_muni"]),
+    (("TX", None, None), "TX", None, ["no_city"]),
+    (("Tx", "SNYDER", None), "TX", "Snyder", ["city_from_inc_muni"]),
+    # Only in the state it is listed for.
+    (("County N", None, None), "ID", "County N", ["city_not_in_reference"]),
+    # A value that is a place in the state is never dropped.
+    (("County N", None, None), "OR", "County N", []),
+])
+def test_choose_city_drops_reviewed_non_places(fields, state, expected, flags):
+    assert choose_city(*fields, state, NAMES_DROPS) == (expected, flags)
+
+
+def test_city_drops_file_is_consistent():
+    drops = load_city_drops()
+    assert drops
+    keys = [(state, city_key(value)) for state, value in drops]
+    assert len(keys) == len(set(keys))
+    for state, value in drops:
+        assert (state == "*" or len(state) == 2) and value
+        assert ("*", city_key(value)) not in keys or state == "*", f"{value} is also under *"
 
 
 @pytest.fixture
