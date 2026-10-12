@@ -20,6 +20,10 @@ const dark = matchMedia("(prefers-color-scheme: dark)").matches;
 const css = getComputedStyle(document.documentElement);
 const color = (name) => css.getPropertyValue(name).trim();
 const COLORS = { nad: color("--nad"), mixed: color("--mixed"), other: color("--other") };
+// Class breaks in OSM addresses per 100 NAD+ points. Most counties have OSM at a few per
+// hundred and a few hundred are near even, so the classes widen as they go up.
+const RATIO_BREAKS = [1, 5, 25, 75];
+const RATIO_COLORS = [1, 2, 3, 4, 5].map((i) => color(`--ratio-${i}`));
 const fmt = new Intl.NumberFormat("en-US");
 
 const STATES = {
@@ -144,6 +148,56 @@ function byOrigin(nad, mixed, other) {
   return ["match", ["get", "origin"], "other", other, "mixed", mixed, nad];
 }
 
+const hover = ["boolean", ["feature-state", "hover"], false];
+
+// Every county stays in the fill layer, so sparse ones can still be hovered and clicked. The
+// ratio ramp has five classes to tell apart, which a thin wash would blur together, so it is
+// filled more strongly than the three distinct source hues.
+function fillOpacity(mode) {
+  const sparse = ["<", ["get", "points"], SPARSE];
+  const fill = (normal, hovered) => ["case", sparse, ["case", hover, 0.15, 0],
+    ["case", hover, hovered, normal]];
+  const [low, mid] = mode === "ratio" ? [fill(0.75, 0.9), fill(0.5, 0.65)] : [fill(0.42, 0.6), fill(0.25, 0.4)];
+  return ["interpolate", ["linear"], ["zoom"], 3, low, 9, mid, POINT_ZOOM, 0.05];
+}
+
+// osm_per_100 is set once the OSM counts are in; until then nothing is drawn in ratio mode.
+function byRatio() {
+  const steps = RATIO_COLORS.slice(1).flatMap((c, i) => [RATIO_BREAKS[i], c]);
+  return ["case", ["has", "osm_per_100"],
+    ["step", ["get", "osm_per_100"], RATIO_COLORS[0], ...steps], color("--muted")];
+}
+
+// "source" colors counties by where their points come from, "ratio" by how many addresses
+// OSM has against them. The choice is remembered, like the history fold below.
+const COLOR_BY_KEY = "nad-color-by";
+let colorBy = "source";
+try {
+  if (localStorage.getItem(COLOR_BY_KEY) === "ratio") colorBy = "ratio";
+} catch {
+  // No storage: start on sources.
+}
+
+function setColorBy(mode) {
+  colorBy = mode;
+  try {
+    localStorage.setItem(COLOR_BY_KEY, mode);
+  } catch {
+    // The choice still holds until the page is reloaded.
+  }
+  $("legend-source").hidden = mode !== "source";
+  $("legend-ratio").hidden = mode !== "ratio";
+  for (const input of $("color-by").elements) input.checked = input.value === mode;
+  if (!map.getLayer("coverage-fill")) return;
+  const expr = mode === "ratio" ? byRatio() : byOrigin(COLORS.nad, COLORS.mixed, COLORS.other);
+  map.setPaintProperty("coverage-fill", "fill-color", expr);
+  map.setPaintProperty("coverage-fill", "fill-opacity", fillOpacity(mode));
+  map.setPaintProperty("coverage-line", "line-color", expr);
+  map.setPaintProperty("coverage-sparse", "line-color", expr);
+}
+
+$("color-by").addEventListener("change", (e) => setColorBy(e.target.value));
+
 map.on("load", () => {
   // Coverage sits under the basemap's labels; the points go on top of everything.
   const labels = map.getStyle().layers.find((l) => l.type === "symbol")?.id;
@@ -153,19 +207,14 @@ map.on("load", () => {
     data: { type: "FeatureCollection", features: [] },
     promoteId: "geoid",
   });
-  const hover = ["boolean", ["feature-state", "hover"], false];
   const sparse = ["<", ["get", "points"], SPARSE];
-  // Every county stays in the fill layer, so sparse ones can still be hovered and clicked.
-  const fill = (normal, hovered) => ["case", sparse, ["case", hover, 0.15, 0],
-    ["case", hover, hovered, normal]];
   map.addLayer({
     id: "coverage-fill",
     type: "fill",
     source: "coverage",
     paint: {
       "fill-color": byOrigin(COLORS.nad, COLORS.mixed, COLORS.other),
-      "fill-opacity": ["interpolate", ["linear"], ["zoom"],
-        3, fill(0.42, 0.6), 9, fill(0.25, 0.4), POINT_ZOOM, 0.05],
+      "fill-opacity": fillOpacity("source"),
     },
   }, labels);
   const lineWidth = ["interpolate", ["linear"], ["zoom"],
@@ -266,6 +315,16 @@ async function loadCoverage() {
   }
 
   await osmLoaded;
+  if (osm.counts) {
+    // The OSM counts go into each county's properties, so the map can be colored by them.
+    for (const f of data.features) {
+      const n = osm.counts[f.properties.geoid];
+      if (n !== undefined && f.properties.points) f.properties.osm_per_100 = (100 * n) / f.properties.points;
+    }
+    map.getSource("coverage").setData(data);
+    $("color-by").hidden = false;
+    setColorBy(colorBy);
+  }
   renderStates(data);
   renderSources(data.release, coverage.sources);
   $("coverage-status").textContent = `${fmt.format(data.features.length)} counties hold points.`;
@@ -725,13 +784,38 @@ function addressHtml(features) {
   return `<div class="pop">${body}${more}${thin}<p class="sub"><a href="${osm}" target="_blank" rel="noopener">Open this spot on OpenStreetMap</a></p></div>`;
 }
 
-// OSM counts elements with addr:housenumber, a different measure from the points above, so
-// the two are shown apart and never compared.
+// OSM counts elements with addr:housenumber, NAD+ counts points (one per unit, where an OSM
+// building may carry one address for all of them), so the two are compared only roughly:
+// a ratio rounded to a figure or two, never a percentage that would read as "complete".
+function roughRatio(n, points) {
+  if (!n) return "No addresses in OSM yet";
+  const r = n / points;
+  if (r >= 0.9 && r <= 1.1) return "About as many in OSM as in NAD+";
+  if (r > 1.1) return `About ${rough(r)}× as many in OSM as in NAD+`;
+  return `About 1 in OSM for every ${rough(1 / r)} NAD+ points`;
+}
+
+// 1.4, 8, 35, 260, 4,100: one decimal under 2, then whole numbers to two figures.
+function rough(v) {
+  if (v < 2) return v.toFixed(1);
+  const p = 10 ** Math.max(0, Math.floor(Math.log10(v)) - 1);
+  return fmt.format(Math.round(v / p) * p);
+}
+
+function ratioColor(per100) {
+  return RATIO_COLORS[RATIO_BREAKS.filter((b) => per100 >= b).length];
+}
+
 function osmHtml(p) {
   const n = osm.counts?.[p.geoid];
   if (n === undefined) return "";
+  // Below SPARSE the NAD+ points are mostly strays, and any ratio would be noise.
+  const ratio = p.points >= SPARSE
+    ? `<div class="ratio"><span class="kind" style="background:${ratioColor((100 * n) / p.points)}"></span>${esc(roughRatio(n, p.points))}</div>`
+    : "";
   return `<div class="osm">
     <div class="row"><span>Addresses in OpenStreetMap</span><span>${fmt.format(n)}</span></div>
+    ${ratio}
     <div class="sub">OSM as of ${esc(osm.asOf)}</div>
     <details class="trend-fold"${trendOpen ? " open" : ""}>
       <summary>Over time</summary>

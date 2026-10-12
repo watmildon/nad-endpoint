@@ -37,10 +37,29 @@
       <p class="intro">Zoom in to view individual addresses.</p>
 
       <section class="legend" aria-label="Legend">
-        <ul>
+        <fieldset id="color-by" class="color-by" hidden>
+          <legend>Color counties by</legend>
+          <label><input type="radio" name="color-by" value="source" checked><span>Source</span></label>
+          <label><input type="radio" name="color-by" value="ratio"><span>OSM vs NAD+</span></label>
+        </fieldset>
+        <ul id="legend-source">
           <li><span class="swatch" style="--c: var(--nad)"></span>Points from NAD</li>
           <li><span class="swatch" style="--c: var(--mixed)"></span>Mixed sources</li>
           <li><span class="swatch" style="--c: var(--other)"></span>Non-NAD sources</li>
+        </ul>
+        <div id="legend-ratio" hidden>
+          <p class="legend-title">OSM addresses per 100 NAD+ points</p>
+          <ul>
+            <li><span class="swatch" style="--c: var(--ratio-1)"></span>Under 1</li>
+            <li><span class="swatch" style="--c: var(--ratio-2)"></span>1 to 5</li>
+            <li><span class="swatch" style="--c: var(--ratio-3)"></span>5 to 25</li>
+            <li><span class="swatch" style="--c: var(--ratio-4)"></span>25 to 75</li>
+            <li><span class="swatch" style="--c: var(--ratio-5)"></span>75 or more</li>
+          </ul>
+          <p class="note">A rough guide: OSM counts tagged elements and NAD+ counts points, one per
+            unit, so a well-mapped county can still sit well under 100.</p>
+        </div>
+        <ul>
           <li><span class="swatch sparse" style="--c: var(--muted)"></span>Fewer than 100 points</li>
           <li><span class="dot"></span>Address point (zoom 10+)</li>
         </ul>
