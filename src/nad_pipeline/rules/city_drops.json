@@ -31,6 +31,7 @@
     {"value": "Lvpob", "note": "a code, not a place; the rows name the place in Inc_Muni or Uninc_Comm"},
     {"value": "Mypob", "note": "a code, not a place; the rows name the place in Inc_Muni or Uninc_Comm"},
     {"value": "Ooc", "note": "Autauga County; no GNIS place within 25 km fits the code"},
+    {"value": "Pen", "note": "Autauga County code spanning several postal cities"},
     {"value": "RD", "note": "Shelby County rows"},
     {"value": "Tipob", "note": "a code, not a place; the rows name the place in Inc_Muni or Uninc_Comm"},
     {"value": "V", "note": "Crenshaw County row"},
