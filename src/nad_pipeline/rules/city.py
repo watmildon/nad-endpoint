@@ -215,7 +215,8 @@ def choose_city(post_city, inc_muni, uninc_comm, state, names: PlaceNames, count
     field, value = candidates[0]
     flags = source_flags(field)
     if known := names.lookup(state, value):
-        return known, flags
+        # Spelled as the one place of that name elsewhere, but not a known place here.
+        return known, flags + ["city_not_in_reference"]
     if not value.isupper() and not value.islower():
         return value, flags + ["city_not_in_reference"]
     return (smart_title(value, keep_upper=CITY_KEEP_UPPER, lower_words=ENGLISH_LOWER_WORDS),

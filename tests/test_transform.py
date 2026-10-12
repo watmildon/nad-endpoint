@@ -38,8 +38,8 @@ def test_city_key_ignores_spelling_conventions(a, b):
      ["city_from_uninc_comm", "city_not_in_reference"]),
     (("ST LOUIS", None, None), "MO", "St. Louis", []),
     (("LAGRANGE", None, None), "KY", "La Grange", []),
-    # Unknown in its own state, but spelled one way everywhere else.
-    (("MCALLEN", None, None), "NM", "McAllen", []),
+    # Unknown in its own state, but spelled one way everywhere else: that spelling, flagged.
+    (("MCALLEN", None, None), "NM", "McAllen", ["city_not_in_reference"]),
     (("EAST NOWHERE", None, None), "TX", "East Nowhere",
      ["city_not_in_reference", "city_cased_by_rule"]),
     (("Not stated", "Unincorporated", "<Null>"), "TX", None, ["no_city"]),
@@ -152,7 +152,7 @@ NAMES_POSTAL = PlaceNames([
     (("Cortlandt Manor", "Cortlandt", None), "NY", "Cortlandt Manor", ["city_not_in_reference"]),
     (("CORTLANDT MANOR", "CORTLANDT", None), "NY", "Cortlandt Manor",
      ["city_not_in_reference", "city_cased_by_rule"]),
-    (("West Harrison", "Harrison", None), "NY", "West Harrison", []),
+    (("West Harrison", "Harrison", None), "NY", "West Harrison", ["city_not_in_reference"]),
     (("Hot Springs National Park", "Hot Springs", None), "AR", "Hot Springs National Park",
      ["city_not_in_reference"]),
     (("Hueysville", "UNINCORPORATED", "Wayland"), "KY", "Hueysville", ["city_not_in_reference"]),
