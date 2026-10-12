@@ -111,9 +111,6 @@ class PlaceNames:
             if len(counter) > 1:
                 self.conflicts.append((key[0], best, dict(counter)))
         self.national = {k: next(iter(v)) for k, v in national.items() if len(v) == 1}
-        self.keys_by_state = defaultdict(set)
-        for state, key in self.by_state:
-            self.keys_by_state[state].add(key)
         # By county, so the same typo can stand for different places in a large state.
         self.typos = {(state, county_key(county), city_key(typo)): city
                       for state, county, typo, city in typos}
@@ -134,13 +131,6 @@ class PlaceNames:
         if city := self.typos.get((state, county_key(county), city_key(name))):
             return self.by_state.get((state, city_key(city)), city)
         return None
-
-    def near_miss(self, state: str | None, name: str) -> bool:
-        """True if name is one edit from a place in the state ("MISISON" for Mission)."""
-        key = city_key(name)
-        return len(key) >= 5 and any(
-            abs(len(key) - len(k)) <= 1 and edit_distance(key, k) <= 1
-            for k in self.keys_by_state.get(state, ()))
 
 
 def _candidate(raw, state, county, names: PlaceNames) -> str | None:
