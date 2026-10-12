@@ -20,5 +20,8 @@ AGENTS.md
 .aider*
 .github/copilot-instructions.md
 
+# Private Overpass endpoint (a secret)
+.overpass-url
+
 # Cloudflare wrangler local state
 .wrangler/

@@ -7,17 +7,28 @@ OSM street names and, where OSM has them, OSM addresses.
 import difflib
 import json
 import math
+import os
 import re
+import time
+import urllib.error
 import urllib.parse
 import urllib.request
 from collections import Counter, defaultdict
+from pathlib import Path
 
-OVERPASS_URL = "https://overpass-api.de/api/interpreter"
+from . import config
+
+# Public mirrors, one per operator. They are tried after the private instance, if any.
+PUBLIC_OVERPASS = [
+    "https://overpass-api.de/api/interpreter",
+    "https://overpass.private.coffee/api/interpreter",
+    "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
+]
 ESRI_NAD_LAYER = (
     "https://services6.arcgis.com/Do88DoK2xjTUCXd1/arcgis/rest/services/"
     "USA_NAD_Addresses/FeatureServer/0"
 )
-USER_AGENT = "nad-pipeline-spotcheck/0.1"
+USER_AGENT = "nad-pipeline-spotcheck/0.1 (+https://github.com/watmildon/nad-endpoint)"
 
 # (south, west, north, east)
 AREAS = {
@@ -49,6 +60,45 @@ def _get_json(url: str, data: dict | None = None) -> dict:
         return json.load(resp)
 
 
+def overpass_endpoints(env=None, repo_root: Path | None = None) -> list[str]:
+    """Overpass servers in the order to try them: a private instance, then public mirrors.
+
+    The private URL comes from OVERPASS_URL or OVERPASS_PRIMARY_URL, else a gitignored
+    .overpass-url file in the repo root. It is a secret: never log or print it.
+    """
+    env = os.environ if env is None else env
+    private = env.get("OVERPASS_URL") or env.get("OVERPASS_PRIMARY_URL")
+    path = (repo_root or config.REPO_ROOT) / ".overpass-url"
+    if not private and path.is_file():
+        private = path.read_text(encoding="utf-8").strip()
+    return ([private] if private else []) + [u for u in PUBLIC_OVERPASS if u != private]
+
+
+def overpass(query: str, endpoints: list[str] | None = None, get_json=_get_json) -> dict:
+    """Run a query on the first server that answers it.
+
+    A 429, other HTTP error, network error or non-JSON body moves on to the next server, as
+    does a reply with no elements list or a remark (a server error) with no elements.
+    Failures name a server by its position, not its URL.
+    """
+    failures = []
+    for i, url in enumerate(endpoints or overpass_endpoints(), start=1):
+        try:
+            data = get_json(url, {"data": query})
+        except urllib.error.HTTPError as exc:
+            failures.append(f"server {i}: HTTP {exc.code}")
+            if exc.code == 429:
+                time.sleep(5)  # this server's cooldown is still running; try the next
+            continue
+        except (OSError, ValueError) as exc:
+            failures.append(f"server {i}: {type(exc).__name__}")
+            continue
+        if "elements" in data and (data["elements"] or not data.get("remark")):
+            return data
+        failures.append(f"server {i}: no elements")
+    raise IOError("Overpass query failed on every server: " + "; ".join(failures))
+
+
 def fetch_osm(bbox) -> tuple[list[dict], set[str], set[str]]:
     """Return (addresses, primary street names, alternate street names) inside bbox."""
     s, w, n, e = bbox
@@ -61,7 +111,7 @@ def fetch_osm(bbox) -> tuple[list[dict], set[str], set[str]]:
         out tags center;
     """
     addresses, names, alt_names = [], set(), set()
-    for el in _get_json(OVERPASS_URL, {"data": query})["elements"]:
+    for el in overpass(query)["elements"]:
         tags = el.get("tags", {})
         if "highway" in tags and el["type"] == "way":
             for key in STREET_NAME_KEYS:

@@ -1,7 +1,10 @@
+import urllib.error
+
 import pytest
 
 from nad_pipeline.spotcheck import (
-    compare_addresses, compare_streets, differs_only_by_directional,
+    PUBLIC_OVERPASS, compare_addresses, compare_streets, differs_only_by_directional, overpass,
+    overpass_endpoints,
 )
 
 
@@ -102,3 +105,46 @@ def test_punctuation_difference_is_its_own_category():
     result = compare_streets(
         points, names={"Bennett's Way", "C & H Circle", "Brannon-Harris Way"}, alt_names=set())
     assert (result["punctuation_only"], result["unmatched"]) == (3, 0)
+
+
+PRIVATE = "https://private.example/api/interpreter"
+
+
+def test_overpass_endpoints_prefer_env_then_repo_file(tmp_path):
+    (tmp_path / ".overpass-url").write_text("https://repo.example/api\n")
+    assert overpass_endpoints({}, tmp_path) == ["https://repo.example/api", *PUBLIC_OVERPASS]
+    assert overpass_endpoints({"OVERPASS_PRIMARY_URL": PRIVATE}, tmp_path)[0] == PRIVATE
+    assert overpass_endpoints(
+        {"OVERPASS_URL": PRIVATE, "OVERPASS_PRIMARY_URL": "x"}, tmp_path)[0] == PRIVATE
+
+
+def test_overpass_endpoints_fall_back_to_public_mirrors(tmp_path):
+    assert overpass_endpoints({}, tmp_path) == PUBLIC_OVERPASS
+
+
+def test_overpass_fails_over_without_naming_servers():
+    calls = []
+
+    def get_json(url, data):
+        calls.append(url)
+        if url == PRIVATE:
+            raise urllib.error.HTTPError(url, 504, "Gateway Timeout", {}, None)
+        if url == PUBLIC_OVERPASS[0]:
+            return {"remark": "runtime error: Query timed out", "elements": []}
+        return {"elements": [{"type": "node"}]}
+
+    endpoints = [PRIVATE, *PUBLIC_OVERPASS]
+    assert overpass("q", endpoints, get_json) == {"elements": [{"type": "node"}]}
+    assert calls == endpoints[:3]
+
+    def failing(url, data):
+        raise ValueError("not JSON")
+
+    with pytest.raises(IOError) as exc:
+        overpass("q", [PRIVATE, PUBLIC_OVERPASS[0]], failing)
+    assert str(exc.value).endswith("server 1: ValueError; server 2: ValueError")
+    assert "example" not in str(exc.value) and "overpass" not in str(exc.value).split(":", 1)[1]
+
+
+def test_overpass_accepts_an_empty_result():
+    assert overpass("q", [PRIVATE], lambda url, data: {"elements": []}) == {"elements": []}
