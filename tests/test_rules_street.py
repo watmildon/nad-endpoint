@@ -71,6 +71,12 @@ def test_smart_title(text, expected):
     (dict(name="MAIN STREET", post_type="Street"), "Main Street"),
     (dict(name="7TH AVE", post_type="Court"), "7th Avenue Court"),
     (dict(name="SILVER LK", post_type="Road"), "Silver Lake Road"),
+    (dict(name="Broadmore Ests"), "Broadmore Estates"),
+    (dict(name="GRASSY FRK"), "Grassy Fork"),
+    (dict(name="Mill Creek E Frk", post_type="Road"), "Mill Creek E Fork Road"),
+    (dict(name="HICKORY FLT", post_type="Meadow"), "Hickory Flat Meadow"),
+    (dict(name="Auto Tour Rte"), "Auto Tour Route"),
+    (dict(name="LINCOLN HWY 1919 RTE"), "Lincoln Highway 1919 Route"),
     # The name repeats the type and directional that the fields already carry.
     (dict(name="CARIBBEAN DR W", post_type="Drive", post_dir="West"), "Caribbean Drive West"),
     (dict(name="US 64 HWY E", post_type="Highway", post_dir="East"), "US 64 Highway East"),
@@ -87,6 +93,18 @@ def test_smart_title(text, expected):
     # Routes.
     (dict(name="CR 123"), "County Road 123"),
     (dict(name="CO RD 12"), "County Road 12"),
+    # A trailing route word after ST, STE or CO is not a stripped street type.
+    (dict(name="STE RTE"), "State Route"),
+    (dict(name="STE RTE", post_type="Highway"), "State Route Highway"),
+    (dict(name="ST RTE"), "State Route"),
+    (dict(name="ST RD"), "State Road"),
+    (dict(name="CO RD"), "County Road"),
+    (dict(name="CO RTE"), "County Route"),
+    # Missouri's lettered routes keep the letter: it is not a directional.
+    (dict(name="RTE E", pre_dir="North"), "North Route E"),
+    (dict(name="RTE Z", pre_dir="North"), "North Route Z"),
+    (dict(name="RT Z"), "Route Z"),
+    (dict(name="OLD RT C"), "Old Route C"),
     (dict(name="HWY 79", post_dir="North"), "Highway 79 North"),
     (dict(name="FS RD 21"), "Forest Service Road 21"),
     (dict(name="FM 1960"), "FM 1960"),

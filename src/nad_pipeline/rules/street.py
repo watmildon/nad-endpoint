@@ -34,6 +34,7 @@ TRAILING_TYPES = {
     "CV": "Cove", "EXT": "Extension", "SQ": "Square", "XING": "Crossing", "HTS": "Heights",
     "EXPY": "Expressway", "FWY": "Freeway", "ALY": "Alley", "TPKE": "Turnpike",
     "RDG": "Ridge", "LNDG": "Landing", "HOLW": "Hollow", "HL": "Hill",
+    "ESTS": "Estates", "FRK": "Fork", "FLT": "Flat", "RTE": "Route",
 }
 TYPE_WORDS = {t.upper() for t in TRAILING_TYPES.values()} | {"ROUTE", "WAY", "LOOP"}
 ROUTE_WORDS = {"RTE", "RT", "ROUTE", "HWY", "HIGHWAY", "RD", "ROAD"}
@@ -182,7 +183,9 @@ def expand_name(name: str, has_pre_dir: bool, has_post_dir: bool, pre_type=None,
     if len(tokens) > 2 and _bare(tokens[-1]) == _bare(tokens[-2]) in TRAILING_TYPES:
         tokens.pop()  # 24TH ST ST, PRAIRIE POINT DR DR
         flags.append("duplicate_type")
-    if len(tokens) > 1 and _bare(tokens[-1]) in TRAILING_TYPES:
+    if len(tokens) > 1 and _bare(tokens[-1]) in TRAILING_TYPES and not (
+            _bare(tokens[-2]) in ("ST", "STE", "CO") and _bare(tokens[-1]) in ROUTE_WORDS):
+        # ST RD, STE RTE, CO RD stay whole so ST/STE/CO read as State and County.
         name_type = TRAILING_TYPES[_bare(tokens.pop())]
         flags.append("name_had_type")
     if len(tokens) > 1 and not has_pre_dir and _bare(tokens[0]) in DIRECTIONS:
@@ -218,9 +221,10 @@ def expand_name(name: str, has_pre_dir: bool, has_post_dir: bool, pre_type=None,
             word = NAME_ABBREVIATIONS[bare]
         elif bare == "US":
             word = "US"
-        elif bare in ("RTE", "RT") and (prev in ("ST", "STATE", "CO", "COUNTY", "US", "OLD")
-                                         or (nxt and nxt[0].isdigit())):
-            word = "Route"
+        elif bare in ("RTE", "RT") and (prev in ("ST", "STE", "STATE", "CO", "COUNTY", "US", "OLD")
+                                         or (nxt and nxt[0].isdigit())
+                                         or (nxt and len(nxt) == 1 and nxt.isalpha())):
+            word = "Route"  # RTE 9, and Missouri's lettered routes: RTE E, RT Z
         elif bare == "CR" and nxt and nxt[0].isdigit():
             word = "County Road"
         elif bare == "CO" and nxt in ROUTE_WORDS:
