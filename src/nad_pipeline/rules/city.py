@@ -1,8 +1,10 @@
 """addr:city: pick the best populated NAD place field and give it its proper spelling."""
 
+import json
 import re
 import unicodedata
 from collections import Counter, defaultdict
+from pathlib import Path
 
 from . import clean
 from .casing import ENGLISH_LOWER_WORDS, smart_title
@@ -34,6 +36,11 @@ SOURCE_PRIORITY = ["census_place", "gnis", "census_cousub", "wikidata"]
 POSTAL_STATION_STATES = {"AZ"}
 # Unknown values this short are office codes, not names ("ADK", "DKLB", "WILM").
 _CODE = re.compile(r"[A-Za-z]{1,4}")
+# Reviewed misspellings found in NAD r24, by state: the typo, the place it stands for, and
+# the county it was seen in. Built from the city_not_in_reference report.
+TYPOS_FILE = Path(__file__).with_name("city_typos.json")
+_COUNTY_DESCRIPTOR = re.compile(
+    r"\s+(county|parish|borough|census area|municipality|city and borough)$", re.IGNORECASE)
 
 
 def city_key(name: str) -> str:
@@ -49,6 +56,18 @@ def city_key(name: str) -> str:
     if len(words) > 1 and len(words[1]) > 1 and words[0] in LEADING_KEY_WORDS:  # not "S.N.P.J."
         words[0] = LEADING_KEY_WORDS[words[0]]
     return "".join(KEY_WORDS.get(w, w) for w in words)
+
+
+def county_key(name: str) -> str:
+    """Comparison key for a county: "Orleans Parish" and "ORLEANS" match."""
+    return city_key(_COUNTY_DESCRIPTOR.sub("", name.strip()))
+
+
+def load_city_typos(path: Path = TYPOS_FILE) -> list[tuple[str, str, str, str]]:
+    """(state, county, typo, city) rows from the reviewed typo file."""
+    with open(path, encoding="utf-8") as f:
+        return [(state, e["county"], e["typo"], e["city"])
+                for state, entries in json.load(f).items() for e in entries]
 
 
 def edit_distance(a: str, b: str) -> int:
@@ -73,8 +92,8 @@ def _misspelling_of(key: str, other: str) -> bool:
 class PlaceNames:
     """Proper spellings of place names, combined from several reference sources."""
 
-    def __init__(self, rows):
-        """rows: iterable of (state, name, source)."""
+    def __init__(self, rows, typos=()):
+        """rows: iterable of (state, name, source); typos: (state, county, typo, city)."""
         votes = defaultdict(Counter)
         sources = defaultdict(dict)
         for state, name, source in rows:
@@ -95,12 +114,26 @@ class PlaceNames:
         self.keys_by_state = defaultdict(set)
         for state, key in self.by_state:
             self.keys_by_state[state].add(key)
+        # By county, so the same typo can stand for different places in a large state.
+        self.typos = {(state, county_key(county), city_key(typo)): city
+                      for state, county, typo, city in typos}
 
     def lookup(self, state: str | None, name: str, national: bool = True) -> str | None:
         key = city_key(name)
         if known := self.by_state.get((state, key)):
             return known
         return self.national.get(key) if national else None
+
+    def typo(self, state: str | None, county: str | None, name: str) -> str | None:
+        """The place a reviewed typo stands for ("Weatherord" -> Weatherford), or None.
+
+        A name that is itself a place in the state is never treated as a typo.
+        """
+        if not county or self.lookup(state, name, national=False):
+            return None
+        if city := self.typos.get((state, county_key(county), city_key(name))):
+            return self.by_state.get((state, city_key(city)), city)
+        return None
 
     def near_miss(self, state: str | None, name: str) -> bool:
         """True if name is one edit from a place in the state ("MISISON" for Mission)."""
@@ -157,7 +190,8 @@ def choose_city(post_city, inc_muni, uninc_comm, state, names: PlaceNames, count
     Postal city first, then municipality, then community. A field whose value is a known
     place in that state is preferred over an earlier field whose value is not, if the earlier
     value gives way (see _gives_way): some sources put post office branch names ("Mesa Four
-    Peaks") or misspellings in the postal city.
+    Peaks") or misspellings in the postal city. Reviewed typos (city_typos.json) are
+    corrected first, in the county they were found in.
     """
     candidates = [
         (field, value)
@@ -167,11 +201,18 @@ def choose_city(post_city, inc_muni, uninc_comm, state, names: PlaceNames, count
     ]
     if not candidates:
         return None, ["no_city"]
+    fixed = set()
+    for i, (field, value) in enumerate(candidates):
+        if city := names.typo(state, county, value):
+            candidates[i] = (field, city)
+            fixed.add(field)
 
     def source_flags(field):
         flags = [] if field == "post_city" else [f"city_from_{field}"]
         if field != candidates[0][0]:
             flags.append(f"unknown_{candidates[0][0]}_skipped")
+        if field in fixed:
+            flags.append("city_typo_fixed")
         return flags
 
     for field, value in candidates:

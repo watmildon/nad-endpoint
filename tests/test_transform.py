@@ -4,7 +4,9 @@ import duckdb
 import pytest
 
 from nad_pipeline import ingest
-from nad_pipeline.rules.city import PlaceNames, choose_city, city_key, edit_distance
+from nad_pipeline.rules.city import (
+    PlaceNames, choose_city, city_key, county_key, edit_distance, load_city_typos,
+)
 from nad_pipeline.transform import osm_glob, report_dir, transform_dir
 
 from conftest import FIXTURE_ROWS
@@ -173,6 +175,56 @@ NAMES_POSTAL = PlaceNames([
 ])
 def test_choose_city_unknown_postal_city(fields, state, expected, flags):
     assert choose_city(*fields, state, NAMES_POSTAL) == (expected, flags)
+
+
+NAMES_TYPOS = PlaceNames([
+    ("TX", "Weatherford", "census_place"), ("TX", "Whitney", "census_place"),
+    ("TX", "Walnut Springs", "census_place"), ("LA", "Arnaudville", "census_place"),
+    ("TX", "Saint Lawrence", "gnis"), ("TX", "St. Lawrence", "census_place"),
+], typos=[
+    ("TX", "Parker", "Weatherord", "Weatherford"),
+    # The same typo standing for different places in different counties.
+    ("TX", "Hill", "Whtney", "Whitney"),
+    ("TX", "Bosque", "Whtney", "Walnut Springs"),
+    # A typo that is a place in the state is never applied.
+    ("TX", "Parker", "Whitney", "Weatherford"),
+    ("LA", "St. Landry", "Arnadville", "Arnaudville"),
+    ("TX", "Glasscock", "St Lawrenc", "Saint Lawrence"),
+])
+
+
+@pytest.mark.parametrize("fields, state, county, expected, flags", [
+    (("WEATHERORD", None, None), "TX", "Parker", "Weatherford", ["city_typo_fixed"]),
+    (("Weatherord", None, None), "TX", "Parker County", "Weatherford", ["city_typo_fixed"]),
+    ((None, "WEATHERORD", None), "TX", "Parker", "Weatherford",
+     ["city_from_inc_muni", "city_typo_fixed"]),
+    # Only in the county the typo was found in.
+    (("WEATHERORD", None, None), "TX", "Tarrant", "Weatherord",
+     ["city_not_in_reference", "city_cased_by_rule"]),
+    (("WEATHERORD", None, None), "TX", None, "Weatherord",
+     ["city_not_in_reference", "city_cased_by_rule"]),
+    (("WHTNEY", None, None), "TX", "Hill", "Whitney", ["city_typo_fixed"]),
+    (("WHTNEY", None, None), "TX", "Bosque", "Walnut Springs", ["city_typo_fixed"]),
+    (("WHITNEY", None, None), "TX", "Parker", "Whitney", []),
+    (("ARNADVILLE", None, None), "LA", "St. Landry Parish", "Arnaudville", ["city_typo_fixed"]),
+    # The target takes the reference's spelling.
+    (("ST LAWRENC", None, None), "TX", "Glasscock", "St. Lawrence", ["city_typo_fixed"]),
+    # A typo in the postal city does not hide a known municipality.
+    (("WEATHERORD", "WEATHERFORD", None), "TX", "Parker", "Weatherford", ["city_typo_fixed"]),
+])
+def test_choose_city_fixes_reviewed_typos(fields, state, county, expected, flags):
+    assert choose_city(*fields, state, NAMES_TYPOS, county) == (expected, flags)
+
+
+def test_city_typos_file_is_consistent():
+    typos = load_city_typos()
+    assert typos
+    seen = {}
+    for state, county, typo, city in typos:
+        assert len(state) == 2 and county and typo and city
+        key = (state, county_key(county), city_key(typo))
+        assert seen.setdefault(key, city) == city, f"{key} maps to {seen[key]} and {city}"
+        assert city_key(typo) != city_key(city)
 
 
 @pytest.fixture
