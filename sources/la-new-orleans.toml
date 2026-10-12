@@ -1,7 +1,7 @@
 state = "LA"
 name = "New Orleans Site Address Point"
 publisher = "City of New Orleans"
-notes = "The lat/long columns hold Louisiana state-plane coordinates (EPSG:3452), so the position is taken from the WGS84 point in the_geom. Full street name goes through the street rules as St_Name. No ZIP column; the ZIP polygon backfill fills it. NAD already carries 159K Orleans Parish rows from the communication district, so dedup will collapse the overlap; this source adds roughly 110K."
+notes = "The lat/long columns hold Louisiana state-plane coordinates (EPSG:3452), so the position is taken from the WGS84 point in the_geom. Full street name goes through the street rules as St_Name. No ZIP column; the ZIP polygon backfill fills it. No city column either: placename is a building or landmark name (\"Renaissance Place Apts\", \"Sign\"), filled on 1,618 of 268,595 rows, so it is not mapped and the Census place backfill gives every row New Orleans. NAD already carries 159K Orleans Parish rows from the communication district, so dedup will collapse the overlap; this source adds roughly 110K."
 
 [access]
 protocol = "socrata"
@@ -24,5 +24,4 @@ Add_Number = "addrnum"
 AddNum_Suf = "addrnumsuf"
 St_Name = "fullname"
 Unit = ["unittype", "unitid"]
-Inc_Muni = "placename"
 Point_WKT = "the_geom"
