@@ -5,12 +5,15 @@ import pytest
 
 from nad_pipeline import ingest
 from nad_pipeline.rules.city import (
-    PlaceNames, choose_city, city_key, county_key, edit_distance, load_city_drops,
-    load_city_typos,
+    ACTIONS, Override, PlaceNames, choose_city, city_key, county_key, edit_distance,
+    load_city_overrides,
 )
 from nad_pipeline.transform import osm_glob, report_dir, transform_dir
 
 from conftest import FIXTURE_ROWS
+
+# The placeholders every state drops ("Unincorporated", "Matched"), from the overrides file.
+PLACEHOLDERS = [o for o in load_city_overrides() if o.state == "*"]
 
 NAMES = PlaceNames([
     ("MA", "Bourne", "census_cousub"),
@@ -21,7 +24,7 @@ NAMES = PlaceNames([
     ("TX", "McAllen", "census_place"),
     ("IL", "O'Fallon", "census_place"),
     ("KY", "La Grange", "census_place"),
-])
+], overrides=PLACEHOLDERS)
 
 
 @pytest.mark.parametrize("a, b", [
@@ -55,7 +58,8 @@ NAMES_AZ = PlaceNames([
     ("WI", "Green Bay", "census_place"), ("KY", "Covington", "census_place"),
     ("WI", "West Bend", "census_place"), ("NE", "Omaha", "census_place"),
     ("TX", "Denton", "census_place"), ("MD", "North East", "census_place"),
-])
+    ("GA", "Atlanta", "census_place"),
+], overrides=PLACEHOLDERS + [o for o in load_city_overrides() if (o.state, o.value) == ("GA", "ATL")])
 
 
 @pytest.mark.parametrize("fields, state, county, expected, flags", [
@@ -86,7 +90,8 @@ NAMES_AZ = PlaceNames([
     (("Omaha Area", None, None), "NE", "Douglas", "Omaha", []),
     # ...unless the city really shares the county's name.
     (("DENTON", None, None), "TX", "Denton", "Denton", []),
-    (("ATL", None, None), "GA", "Fulton", "Atlanta", []),
+    # An office code fixed by the overrides file, statewide.
+    (("ATL", None, None), "GA", "Fulton", "Atlanta", ["city_typo_fixed"]),
     (("HILL AFB", None, None), "UT", "Davis", "Hill AFB",
      ["city_not_in_reference", "city_cased_by_rule"]),
     (("MATCHED", "Unincorporated", None), "ME", "Aroostook", None, ["no_city"]),
@@ -141,7 +146,7 @@ NAMES_POSTAL = PlaceNames([
     ("MT", "Plains", "census_place"), ("WA", "Plain", "gnis"), ("GA", "Atlanta", "census_place"),
     ("SD", "Mission", "census_place"), ("SD", "Antelope", "census_place"),
     ("KY", "Wayland", "census_place"),
-])
+], overrides=PLACEHOLDERS)
 
 
 @pytest.mark.parametrize("fields, state, expected, flags", [
@@ -182,15 +187,15 @@ NAMES_TYPOS = PlaceNames([
     ("TX", "Weatherford", "census_place"), ("TX", "Whitney", "census_place"),
     ("TX", "Walnut Springs", "census_place"), ("LA", "Arnaudville", "census_place"),
     ("TX", "Saint Lawrence", "gnis"), ("TX", "St. Lawrence", "census_place"),
-], typos=[
-    ("TX", "Parker", "Weatherord", "Weatherford"),
+], overrides=[
+    Override("TX", "Weatherord", "fix", "Parker", "Weatherford"),
     # The same typo standing for different places in different counties.
-    ("TX", "Hill", "Whtney", "Whitney"),
-    ("TX", "Bosque", "Whtney", "Walnut Springs"),
+    Override("TX", "Whtney", "fix", "Hill", "Whitney"),
+    Override("TX", "Whtney", "fix", "Bosque", "Walnut Springs"),
     # A typo that is a place in the state is never applied.
-    ("TX", "Parker", "Whitney", "Weatherford"),
-    ("LA", "St. Landry", "Arnadville", "Arnaudville"),
-    ("TX", "Glasscock", "St Lawrenc", "Saint Lawrence"),
+    Override("TX", "Whitney", "fix", "Parker", "Weatherford"),
+    Override("LA", "Arnadville", "fix", "St. Landry", "Arnaudville"),
+    Override("TX", "St Lawrenc", "fix", "Glasscock", "Saint Lawrence"),
 ])
 
 
@@ -217,21 +222,11 @@ def test_choose_city_fixes_reviewed_typos(fields, state, county, expected, flags
     assert choose_city(*fields, state, NAMES_TYPOS, county) == (expected, flags)
 
 
-def test_city_typos_file_is_consistent():
-    typos = load_city_typos()
-    assert typos
-    seen = {}
-    for state, county, typo, city in typos:
-        assert len(state) == 2 and county and typo and city
-        key = (state, county_key(county), city_key(typo))
-        assert seen.setdefault(key, city) == city, f"{key} maps to {seen[key]} and {city}"
-        assert city_key(typo) != city_key(city)
-
-
 NAMES_DROPS = PlaceNames([
     ("WA", "Pomeroy", "census_place"), ("TX", "Snyder", "census_place"),
     ("OR", "County N", "gnis"),
-], drops=[("*", "Unkown"), ("WA", "County N"), ("TX", "Tx"), ("OR", "County N")])
+], overrides=[Override("*", "Unkown", "drop"), Override("WA", "County N", "drop"),
+                Override("TX", "Tx", "drop"), Override("OR", "County N", "drop")])
 
 
 @pytest.mark.parametrize("fields, state, expected, flags", [
@@ -250,14 +245,50 @@ def test_choose_city_drops_reviewed_non_places(fields, state, expected, flags):
     assert choose_city(*fields, state, NAMES_DROPS) == (expected, flags)
 
 
-def test_city_drops_file_is_consistent():
-    drops = load_city_drops()
-    assert drops
-    keys = [(state, city_key(value)) for state, value in drops]
-    assert len(keys) == len(set(keys))
-    for state, value in drops:
-        assert (state == "*" or len(state) == 2) and value
-        assert ("*", city_key(value)) not in keys or state == "*", f"{value} is also under *"
+NAMES_KEEPS = PlaceNames([
+    ("AR", "Hot Springs", "census_place"), ("TX", "Llano", "census_place"),
+], overrides=[
+    Override("AR", "Hot Springs National Park", "keep", "Garland"),
+    Override("TX", "Sunrise Beach", "keep", "Llano"),
+    Override("TX", "Malcom", "hold", note="spelled like Malcolm; ZIP says McIntosh"),
+])
+
+
+@pytest.mark.parametrize("fields, state, county, expected, flags", [
+    # Vouched for in its county: no flag, and the entry's spelling.
+    (("HOT SPRINGS NATIONAL PARK", None, None), "AR", "Garland", "Hot Springs National Park", []),
+    # A kept postal city does not give way to the municipality.
+    (("Sunrise Beach", "LLANO", None), "TX", "Llano", "Sunrise Beach", []),
+    # Only in that county.
+    (("HOT SPRINGS NATIONAL PARK", None, None), "AR", "Saline", "Hot Springs National Park",
+     ["city_not_in_reference", "city_cased_by_rule"]),
+    # A hold changes nothing in the output.
+    (("MALCOM", None, None), "TX", "Washington", "Malcom",
+     ["city_not_in_reference", "city_cased_by_rule"]),
+])
+def test_choose_city_applies_keep_and_ignores_hold(fields, state, county, expected, flags):
+    assert choose_city(*fields, state, NAMES_KEEPS, county) == (expected, flags)
+
+
+def test_held_values_report_their_note():
+    assert NAMES_KEEPS.held("TX", "Washington", "Malcom") == "spelled like Malcolm; ZIP says McIntosh"
+    assert NAMES_KEEPS.held("TX", "Washington", "Malcolm") is None
+
+
+def test_city_overrides_file_is_consistent():
+    overrides = load_city_overrides()
+    assert {o.action for o in overrides} <= set(ACTIONS)
+    seen = {}
+    for o in overrides:
+        assert (o.state == "*" or len(o.state) == 2) and o.value
+        key = (o.state, county_key(o.county) if o.county and o.county != "*" else "*",
+               city_key(o.value))
+        assert key not in seen, f"{key} is listed as both {seen[key]} and {o.action}"
+        seen[key] = o.action
+        if o.action == "fix":
+            assert city_key(o.value) != city_key(o.city)
+    statewide = {key[2] for key in seen if key[0] == "*"}
+    assert not [k for k in seen if k[0] != "*" and k[2] in statewide], "also listed under *"
 
 
 @pytest.fixture

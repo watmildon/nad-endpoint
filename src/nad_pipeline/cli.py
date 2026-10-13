@@ -51,6 +51,12 @@ def main(argv=None):
     sub.add_parser("refdata", help="download and build the place name reference")
     p = sub.add_parser("transform", help="apply the field rules and write OSM-tagged points")
     p.add_argument("--release", help="release to transform, e.g. r24 (default: newest)")
+    p = sub.add_parser("city-triage",
+                       help="rewrite the city triage report from the transform output")
+    p.add_argument("--release", help="release, e.g. r24 (default: newest)")
+    p = sub.add_parser("typo-candidates",
+                       help="score unknown city values as typos of nearby known places")
+    p.add_argument("--release", help="release, e.g. r24 (default: newest)")
     p = sub.add_parser("sources", help="fetch the extra sources in sources/*.toml")
     p.add_argument("--release", help="release to attach them to (default: newest)")
     p.add_argument("--only", nargs="*", help="source ids to build (default: all)")
@@ -92,12 +98,24 @@ def main(argv=None):
 
         print(build())
     elif args.command == "transform":
+        from .citytriage import city_triage
+        from .citytypos import typo_candidates
         from .transform import report, transform
 
         release = args.release or _latest_release()
         print(transform(release))
         for path in report(release):
             print(path)
+        print(city_triage(release))
+        print(typo_candidates(release))
+    elif args.command == "city-triage":
+        from .citytriage import city_triage
+
+        print(city_triage(args.release or _latest_release()))
+    elif args.command == "typo-candidates":
+        from .citytypos import typo_candidates
+
+        print(typo_candidates(args.release or _latest_release()))
     elif args.command == "sources":
         from .sources import build
 

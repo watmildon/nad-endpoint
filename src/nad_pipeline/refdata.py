@@ -12,7 +12,7 @@ import zipfile
 from pathlib import Path
 
 from . import config
-from .rules.city import PlaceNames, load_city_drops, load_city_typos
+from .rules.city import PlaceNames, load_city_overrides
 
 REFERENCE_DIR_NAME = "reference"
 GAZETTEER = "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2024_Gazetteer/"
@@ -155,5 +155,4 @@ def load_place_names(ref: Path | None = None) -> PlaceNames:
     with open(path, encoding="utf-8", newline="") as f:
         reader = csv.reader(f)
         next(reader)
-        return PlaceNames((tuple(row) for row in reader), typos=load_city_typos(),
-                          drops=load_city_drops())
+        return PlaceNames((tuple(row) for row in reader), overrides=load_city_overrides())
