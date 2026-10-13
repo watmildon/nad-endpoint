@@ -119,10 +119,15 @@ class PlaceNames:
         """rows: iterable of (state, name, source); overrides: Override decisions."""
         votes = defaultdict(Counter)
         sources = defaultdict(dict)
+        all_sources = defaultdict(set)
         for state, name, source in rows:
             key = (state, city_key(name))
             votes[key][name] += 1
             sources[key].setdefault(name, source)
+            all_sources[key].add(source)
+        # Names only GNIS knows: it lists small hamlets whose names can collide with a county's
+        # local codes, so a reviewed fix for one county may replace them (see fix()).
+        self.gnis_only = {key for key, found in all_sources.items() if found == {"gnis"}}
         self.by_state = {}
         self.conflicts = []
         national = defaultdict(set)
@@ -166,11 +171,17 @@ class PlaceNames:
     def fix(self, state: str | None, county: str | None, name: str) -> str | None:
         """The place a reviewed fix replaces this value with ("Weatherord" -> Weatherford).
 
-        A name that is itself a known place is never replaced.
+        A name that is itself a known place is never replaced, with one exception: a fix for
+        one county may replace a name the reference has only from GNIS. Autauga County AL
+        writes "JON" for Jones, and GNIS lists an unrelated hamlet Jon in Coosa County.
         """
-        if self.known(state, county, name):
+        key = city_key(name)
+        county_fix = (self.decisions["fix"].get((state, county_key(county), key))
+                      if county else None)
+        if self.known(state, county, name) and not (
+                county_fix and (state, key) in self.gnis_only):
             return None
-        if city := self._decision("fix", state, county, name):
+        if city := county_fix or self._decision("fix", state, county, name):
             return self.known(state, county, city) or city
         return None
 

@@ -45,6 +45,7 @@
     {"value": "Gppob", "action": "drop", "note": "a code, not a place; the rows name the place in Inc_Muni or Uninc_Comm"},
     {"value": "Hartsville", "action": "fix", "county": "Morgan", "city": "Hartselle"},
     {"value": "Ind", "action": "fix", "county": "Autauga", "city": "Independence", "note": "code; GNIS Independence 3.0 km away, the only fitting name within 25 km"},
+    {"value": "Jon", "action": "fix", "county": "Autauga", "city": "Jones"},
     {"value": "Layfette", "action": "fix", "county": "Chambers", "city": "La Fayette"},
     {"value": "Lipob", "action": "drop", "note": "a code, not a place; the rows name the place in Inc_Muni or Uninc_Comm"},
     {"value": "Lvpob", "action": "drop", "note": "a code, not a place; the rows name the place in Inc_Muni or Uninc_Comm"},

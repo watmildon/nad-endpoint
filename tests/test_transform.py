@@ -245,6 +245,26 @@ def test_choose_city_drops_reviewed_non_places(fields, state, expected, flags):
     assert choose_city(*fields, state, NAMES_DROPS) == (expected, flags)
 
 
+NAMES_GNIS = PlaceNames([
+    ("AL", "Jon", "gnis"), ("AL", "Jones", "gnis"), ("AL", "Pine Hill", "gnis"),
+    ("AL", "Pine Level", "census_place"),
+], overrides=[
+    Override("AL", "Jon", "fix", "Autauga", "Jones"),
+    # Statewide fixes never replace a known name, even one only GNIS knows.
+    Override("AL", "Pine Hill", "fix", "*", "Pine Level"),
+])
+
+
+@pytest.mark.parametrize("fields, county, expected, flags", [
+    # A county's code that collides with a GNIS-only hamlet elsewhere in the state.
+    (("JON", "JON", None), "Autauga", "Jones", ["city_typo_fixed"]),
+    (("JON", None, None), "Coosa", "Jon", []),
+    (("PINE HILL", None, None), "Wilcox", "Pine Hill", []),
+])
+def test_county_fix_may_replace_a_gnis_only_name(fields, county, expected, flags):
+    assert choose_city(*fields, "AL", NAMES_GNIS, county) == (expected, flags)
+
+
 NAMES_KEEPS = PlaceNames([
     ("AR", "Hot Springs", "census_place"), ("TX", "Llano", "census_place"),
 ], overrides=[
