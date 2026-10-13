@@ -1,8 +1,11 @@
-"""Stage 6: fill missing city and postcode from Census polygons.
+"""Stage 6: fill missing city and postcode from reviewed ZIP facts and Census polygons.
 
 Only rows the transform left without a value are touched, and each fill is flagged
-(city_from_census_place, city_from_census_cousub, postcode_from_zcta) because the value is
-derived from a boundary, not delivered by the address authority.
+(city_from_zip, city_from_census_place, city_from_census_cousub, postcode_from_zcta) because
+the value is derived, not delivered by the address authority. A missing city comes first from
+the row's own ZIP when rules/zip_facts.json says that ZIP has a single postal city (the postal
+city is what addr:city wants), then from the Census place, then the county subdivision. Only a
+ZIP the source supplied counts, never one filled here from a ZCTA.
 """
 
 import re
@@ -11,6 +14,7 @@ from pathlib import Path
 import duckdb
 
 from . import config, refdata
+from .rules.zips import load_zip_facts, single_city_zips
 from .transform import osm_glob
 
 # States where county subdivisions (towns) are the everyday locality and cover all land.
@@ -38,10 +42,13 @@ def backfill(release: str) -> Path:
         places=refdata.boundary_file(ref, "place"),
         cousubs=refdata.boundary_file(ref, "cousub"),
         zctas=refdata.boundary_file(ref, "zcta"),
+        zip_cities=single_city_zips(load_zip_facts()),
     )
 
 
-def backfill_dir(osm_dir: Path, out_dir: Path, places: Path, cousubs: Path, zctas: Path) -> Path:
+def backfill_dir(osm_dir: Path, out_dir: Path, places: Path, cousubs: Path, zctas: Path,
+                 zip_cities=()) -> Path:
+    """zip_cities: (state, zip, city) for ZIPs known to have a single postal city."""
     con = duckdb.connect()
     con.execute("INSTALL spatial")
     con.execute("LOAD spatial")
@@ -61,7 +68,7 @@ def backfill_dir(osm_dir: Path, out_dir: Path, places: Path, cousubs: Path, zcta
     con.execute(
         """
         CREATE TABLE need AS
-        SELECT nad_oid, addr_state, ST_Point(lon, lat) AS pt,
+        SELECT nad_oid, addr_state, addr_postcode AS postcode, ST_Point(lon, lat) AS pt,
                addr_city IS NULL AS need_city, addr_postcode IS NULL AS need_postcode
         FROM osm
         WHERE drop_reason IS NULL AND (addr_city IS NULL OR addr_postcode IS NULL)
@@ -81,15 +88,27 @@ def backfill_dir(osm_dir: Path, out_dir: Path, places: Path, cousubs: Path, zcta
             GROUP BY n.nad_oid
             """
         )
+    con.execute("CREATE TABLE zip_cities (state VARCHAR, zip VARCHAR, city VARCHAR)")
+    if zip_cities:
+        con.executemany("INSERT INTO zip_cities VALUES (?, ?, ?)", list(zip_cities))
+    con.execute(
+        """
+        CREATE TABLE fill_zips AS
+        SELECT n.nad_oid, z.city AS name
+        FROM need n JOIN zip_cities z ON z.state = n.addr_state AND z.zip = n.postcode
+        WHERE n.need_city
+        """
+    )
     con.execute(
         f"""
         COPY (
             SELECT osm.* REPLACE (
-                coalesce(osm.addr_city, fp.name, fc.name) AS addr_city,
+                coalesce(osm.addr_city, fzip.name, fp.name, fc.name) AS addr_city,
                 coalesce(osm.addr_postcode, fz.name) AS addr_postcode,
                 list_sort(list_filter(osm.flags, f -> NOT (
-                        (f = 'no_city' AND coalesce(fp.name, fc.name) IS NOT NULL)))
+                        (f = 'no_city' AND coalesce(fzip.name, fp.name, fc.name) IS NOT NULL)))
                     || CASE WHEN osm.addr_city IS NOT NULL THEN []
+                            WHEN fzip.name IS NOT NULL THEN ['city_from_zip']
                             WHEN fp.name IS NOT NULL THEN ['city_from_census_place']
                             WHEN fc.name IS NOT NULL THEN ['city_from_census_cousub']
                             ELSE [] END
@@ -97,6 +116,7 @@ def backfill_dir(osm_dir: Path, out_dir: Path, places: Path, cousubs: Path, zcta
                             THEN ['postcode_from_zcta'] ELSE [] END) AS flags
             )
             FROM osm
+            LEFT JOIN fill_zips fzip USING (nad_oid)
             LEFT JOIN fill_places fp USING (nad_oid)
             LEFT JOIN fill_cousubs fc USING (nad_oid)
             LEFT JOIN fill_zctas fz USING (nad_oid)

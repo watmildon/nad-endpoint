@@ -105,6 +105,25 @@ def test_backfill_fills_only_missing_values(tmp_path, boundaries):
     ]
 
 
+def test_backfill_uses_single_city_zip_before_census(tmp_path, boundaries):
+    src = write_points(tmp_path / "osm", [
+        row(1, city=None, postcode="47201", flags=["no_city"]),         # inside Columbus too
+        row(2, city=None, postcode=None, flags=["no_city"]),            # ZIP only from the ZCTA
+        row(3, state="KY", city=None, postcode="47201", flags=["no_city"]),  # fact is for IN
+        row(4, city="Elsewhere", postcode="47201"),                     # already has a city
+        row(5, lon=-86.5, city=None, postcode="47202", flags=["no_city"]),   # no fact
+    ])
+    out = backfill_dir(src, tmp_path / "filled", **boundaries,
+                       zip_cities=[("IN", "47201", "Hope")])
+    assert read_points(out, "addr_city, addr_postcode, flags") == [
+        ("Hope", "47201", ["city_from_zip"]),
+        ("Columbus", "47201", ["city_from_census_place", "postcode_from_zcta"]),
+        (None, "47201", ["no_city"]),
+        ("Elsewhere", "47201", []),
+        (None, "47202", ["no_city"]),
+    ]
+
+
 def test_dedup_keeps_best_nearby_copy(tmp_path):
     src = write_points(tmp_path / "filled", [
         row(1, placement="Unknown", updated="2024-01-01"),
