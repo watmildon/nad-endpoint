@@ -38,7 +38,9 @@ _CODE = re.compile(r"[A-Za-z]{1,4}")
 #   keep  vouched for as a real place name in that county, though not in the reference
 #   hold  reviewed without a decision: still flagged, but left out of typo scoring
 # fix and keep need a county; a fix may give "*" for the whole state. drop and hold apply to
-# the whole state unless a county is given.
+# the whole state unless a county is given. A drop with value "*" and a county drops every value
+# in that county that isn't a known place or a reviewed fix (a county whose city field holds
+# its own scheme, such as subdivision names).
 OVERRIDES_FILE = Path(__file__).with_name("city_overrides.json")
 ACTIONS = ("fix", "drop", "keep", "hold")
 _COUNTY_DESCRIPTOR = re.compile(
@@ -87,6 +89,8 @@ def load_city_overrides(path: Path = OVERRIDES_FILE) -> list[Override]:
             else "a keep needs a county" if o.action == "keep" and o.county in (None, "*")
             else "only drop and hold apply in every state" if o.state == "*"
             and o.action not in ("drop", "hold")
+            else 'value "*" is only for a drop in one county' if o.value == "*"
+            and (o.action != "drop" or o.county in (None, "*"))
             else None)
         if problem:
             raise ValueError(f"{path.name}: {o.state} {o.value!r}: {problem}")
@@ -188,10 +192,24 @@ class PlaceNames:
     def dropped(self, state: str | None, county: str | None, name: str) -> bool:
         """Whether a reviewed drop says this value is not a place ("Unkown", "County NE").
 
-        A name that is itself a known place is never dropped.
+        A name that is itself a known place is never dropped, except that a drop for one
+        county may drop a name the reference has only from GNIS (Estill County KY's "White
+        Oak" zone; GNIS's White Oaks are in other counties).
         """
-        return (self._decision("drop", state, county, name) is not None
-                and not self.known(state, county, name))
+        if self._decision("drop", state, county, name) is None:
+            return False
+        if not self.known(state, county, name):
+            return True
+        key = city_key(name)
+        return bool(county) and (state, key) in self.gnis_only and (
+            (state, county_key(county), key) in self.decisions["drop"])
+
+    def drops_unknown(self, state: str | None, county: str | None, name: str) -> bool:
+        """Whether this county drops every value that isn't a known place (value "*"), and
+        this value has no reviewed fix."""
+        return (bool(county) and (state, county_key(county), "*") in self.decisions["drop"]
+                and not self.known(state, county, name)
+                and self._decision("fix", state, county, name) is None)
 
     def held(self, state: str | None, county: str | None, name: str) -> str | None:
         """The note of a reviewed hold on this value, or None."""
@@ -218,6 +236,8 @@ def _candidate(raw, state, county, names: PlaceNames) -> str | None:
         return None
     if re.search(r"\d", value) and state not in _DIGITS_ALLOWED:
         return None  # "971Xx", "Us 12 W", "Green Twp Area 1"
+    if names.drops_unknown(state, county, value):
+        return None  # the county's city field holds its own scheme, not postal cities
     return value
 
 

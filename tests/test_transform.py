@@ -1,4 +1,5 @@
 import csv
+import json
 
 import duckdb
 import pytest
@@ -263,6 +264,44 @@ NAMES_GNIS = PlaceNames([
 ])
 def test_county_fix_may_replace_a_gnis_only_name(fields, county, expected, flags):
     assert choose_city(*fields, "AL", NAMES_GNIS, county) == (expected, flags)
+
+
+NAMES_COUNTY_DROPS = PlaceNames([
+    ("TX", "Mabank", "census_place"), ("TX", "Malakoff", "census_place"),
+    ("KY", "White Oak", "gnis"), ("KY", "Irvine", "census_place"),
+], overrides=[
+    Override("TX", "*", "drop", "Henderson"),
+    Override("TX", "Malakof", "fix", "Henderson", "Malakoff"),
+    Override("KY", "White Oak", "drop", "Estill"),
+])
+
+
+@pytest.mark.parametrize("fields, state, county, expected, flags", [
+    # Every unknown value in the county is dropped; the next field is used.
+    (("CHEROKEE SHORES", "MABANK", None), "TX", "Henderson", "Mabank", ["city_from_inc_muni"]),
+    (("Cherokee Shores", None, None), "TX", "Henderson", None, ["no_city"]),
+    # Known places, names known after stripping a descriptor, and reviewed fixes are kept.
+    (("MABANK", None, None), "TX", "Henderson", "Mabank", []),
+    (("City of Mabank", None, None), "TX", "Henderson", "Mabank", []),
+    (("MALAKOF", None, None), "TX", "Henderson", "Malakoff", ["city_typo_fixed"]),
+    # Other counties are untouched.
+    (("Cherokee Shores", None, None), "TX", "Kaufman", "Cherokee Shores",
+     ["city_not_in_reference"]),
+    # A county drop may drop a name only GNIS knows; elsewhere it stays.
+    (("WHITE OAK", None, None), "KY", "Estill", None, ["no_city"]),
+    (("WHITE OAK", None, None), "KY", "Morgan", "White Oak", []),
+])
+def test_county_drops(fields, state, county, expected, flags):
+    assert choose_city(*fields, state, NAMES_COUNTY_DROPS, county) == (expected, flags)
+
+
+def test_a_wildcard_value_needs_a_county_drop(tmp_path):
+    path = tmp_path / "city_overrides.json"
+    for entry in ({"value": "*", "action": "drop"},
+                  {"value": "*", "action": "fix", "county": "Henderson", "city": "Mabank"}):
+        path.write_text(json.dumps({"TX": [entry]}))
+        with pytest.raises(ValueError, match="only for a drop in one county"):
+            load_city_overrides(path)
 
 
 NAMES_KEEPS = PlaceNames([
